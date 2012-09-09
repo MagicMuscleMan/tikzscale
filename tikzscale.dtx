@@ -1,0 +1,398 @@
+% \iffalse meta-comment
+% !TEX program  = pdfLaTeX
+%<*internal>
+\iffalse
+%</internal>
+%<*readme>
+----------------------------------------------------------------
+tikzscale --- Absolute resizing of TikZ pictures and PGF plots without scaling text
+E-mail: pat_h@web.de
+Released under the LaTeX Project Public License v1.3c or later
+See http://www.latex-project.org/lppl.txt
+----------------------------------------------------------------
+
+This is the tikzscale package, providing an interface similar to includegraphics for tikzpictures. It allows scaling of tikz images and pgfplots to a provided width or height without changing the text size.
+
+Usage: \usepackage{tikzscale}
+    or \usepackage[loadFromCurrentDirectory]{tikzscale}
+
+The package provides the \includetikz command, which has the same syntax as the often used \includegraphics command. As an example write \includetikz{myTikZFile.tikz} instead of \includegraphics{myJPEGFile.jpeg}, where myTikZFile.tikz is an existing text file containing everything from \begin{tikzpicture} to \end{tikzpicture}. To actually do some scaling of the included TikZ file, give an absolute width or height in the optional argument, e.g. \includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
+%</readme>
+%<readme>\endbatchfile
+%<*internal>
+\fi
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+%</internal>
+%<*install>
+\input docstrip.tex
+\keepsilent
+\askforoverwritefalse
+\preamble
+----------------------------------------------------------------
+tikzscale --- Absolute resizing of TikZ pictures and PGF plots without scaling text
+E-mail: pat_h@web.de
+Released under the LaTeX Project Public License v1.3c or later
+See http://www.latex-project.org/lppl.txt
+----------------------------------------------------------------
+
+\endpreamble
+\postamble
+
+Copyright (C) 2012 by Patrick Häcker <pat_h@web.de>
+
+This work may be distributed and/or modified under the
+conditions of the LaTeX Project Public License (LPPL), either
+version 1.3c of this license or (at your option) any later
+version.  The latest version of this license is in the file:
+
+http://www.latex-project.org/lppl.txt
+
+This work is "maintained" (as per LPPL maintenance status) by
+Patrick Häcker.
+
+This work consists of the file  tikzscale.dtx
+and the derived files           tikzscale.ins,
+                                tikzscale.pdf and
+                                tikzscale.sty.
+
+\endpostamble
+\usedir{tex/latex/tikzscale}
+\generate{
+  \file{tikzscale.sty}{\from{tikzscale.dtx}{package}}
+}
+%</install>
+%<install>\endbatchfile
+%<*internal>
+\usedir{source/latex/tikzscale}
+\generate{
+  \file{tikzscale.ins}{\from{tikzscale.dtx}{install}}
+}
+\nopreamble\nopostamble
+\usedir{doc/latex/tikzscale}
+\generate{
+  \file{README.txt}{\from{tikzscale.dtx}{readme}}
+}
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internal>
+%<*package>
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tikzscale}[2012/09/10 v0.1 tikzscale LaTeX package]
+\PassOptionsToPackage{hypertexnames=false}{hyperref}
+\RequirePackage{tikz}
+\RequirePackage{pgfplots}
+\RequirePackage{etoolbox}
+\RequirePackage{etextools}
+\RequirePackage{xparse}
+%</package>
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage[utf8]{inputenx}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{\jobname}
+\usepackage[numbered]{hypdoc}
+\hypersetup{pdftitle=The tikzscale package}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+%
+%\GetFileInfo{\jobname.sty}
+%
+%\title{^^A
+%  \textsf{tikzscale} --- Absolute resizing of TikZ pictures and PGF plots without scaling text\thanks{^^A
+%    This file describes version \fileversion, last revised \filedate.^^A
+%  }^^A
+%}
+%\author{^^A
+%  Patrick Häcker\thanks{E-mail: pat\_h@web.de}^^A
+%}
+%\date{Released \filedate}
+%
+%\maketitle
+%
+%\changes{v0.1}{2012/09/10}{First public release}
+%
+% \section{Introduction}
+% Relatives skalieren in Tikz vorhanden und absolutes Skalieren, wenn Text mitskaliert wird -> Neuerung: Absolut ohne Textskalierung
+% pgfplots erlaubt absolut, allerdings nur Näherungsalgorithmus -> Neuerung: Verbesserte Näherung, idealerweise quasi exakt
+%
+% \section{Usage and Examples}
+%
+% \section{Compatibility}
+% \subsection{Load Order}
+%
+% \subsection{fink and currfile}
+%
+% \subsection{Externalization library}
+%
+% \section{Contributions}
+% \begin{itemize}
+%     \item Any Name
+%         \begin{itemize}
+%             \item did something
+%         \end{itemize}
+% \end{itemize}
+%
+%
+% \section{Implementation}
+% The basic idea is
+%
+%
+%\begin{macro}{\DeclareOption}
+% This is a package option to decide if the package currfile should be used when loading tikzpicture files. If it should not be used, set \cmd{\tikzscale@pwd} to the empty command.
+%    \begin{macrocode}
+\DeclareOption{loadFromCurrentDirectory}{
+%    \end{macrocode}
+	% It is not allowed to load a package inside of \cmd{\DeclareOption}, so delay the loading (http://newsgroups.derkeiler.com/Archive/De/de.comp.text.tex/2006-03/msg01017.html)
+	%    \begin{macrocode}
+	\def\tikzscale@loadCurrfile{}
+}
+\ProcessOptions\relax
+\ifdef{\tikzscale@loadCurrfile}{
+	\RequirePackage{fink}
+	\def\tikzscale@pwd{\finkdir/}
+% 	\RequirePackage{currfile}
+% 	\def\tikzscale@pwd{\currfiledir}
+}{}
+\ProvideDocumentCommand{\tikzscale@pwd}{}{}
+%    \end{macrocode}
+%
+% Provide dummy commands, if the externalization library has not been loaded during the preamble.
+%    \begin{macrocode}
+\AtEndPreamble{%
+	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
+	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
+	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
+	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%^^A TODO: mit \sbox, \usebox, \savebox (LaTeX-Referenz von Kile), sollte manches hier schneller sein
+%
+%\begin{macro}{\tikzscale@scale}
+% Set these as default values to allow a preview of tikzpicture environments in ktikz or the like. Global definitions are necessary, as local definitions result in errors in some situations.
+%
+% Use a scale factor for all tikzpicture environments. Set the factor to 1 as default, so if there are no additional scaling demands, just keep the tikzpicture unscaled. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get squared in the inner one: http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file
+%    \begin{macrocode}
+\gdef\tikzscale@scale{1}
+\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}
+%
+\gdef\tikzscale@width{\linewidth}
+\gdef\tikzscale@height{\linewidth}
+\pgfplotsset{every axis/.style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}
+%    \end{macrocode}
+%\end{macro}
+%
+% This command draws the plot's border at the right text border, so that thick points or label descriptions can reach into the margin. This should be limited to pgfplots only if activated.
+% \tikzset{every picture/.style={trim axis right}}
+%
+% With the option below, the labels can be moved a bit to the left so that they reach to the text margin.
+% yticklabel style={align=right,inner sep=0pt,xshift=-0.1cm}
+%
+%\begin{macro}{\pgfmathsetglobalmacro}
+%    \begin{macrocode}
+\newsavebox{\tikzscale@measuredSize}
+%    \end{macrocode}
+% \cmd{\measureSize}{result variable name}{\cmd{\wd} or \cmd{\ht}}{to-be-measured content}
+%    \begin{macrocode}
+\def\tikzscale@measureSize#1#2#3{%
+	\begin{lrbox}{\tikzscale@measuredSize}#3\end{lrbox}%
+	\pgfmathsetmacro{#1}{#2\tikzscale@measuredSize}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\pgfmathsetglobalmacro}
+% This is a general command, which might be useful for inclusion into the tikz package. It works similar to \cmd{\pgfmathsetglobalmacro} but has global scope.
+%    \begin{macrocode}
+\def\pgfmathsetglobalmacro#1#2{%
+	\pgfmathparse{#2}%
+	\global\let#1\pgfmathresult%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\includetikz}
+% This command allows the inclusion of a tikz file like a graphics file. Thus instead of writing
+% \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
+% write
+% \cmd{\includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
+% If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for pgfplots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
+%    \begin{macrocode}
+\NewDocumentCommand{\includetikz}{>{\SplitList,}O{width=\linewidth}m}{%
+%    \end{macrocode}
+	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
+%    \begin{macrocode}
+	\begingroup
+%    \end{macrocode}
+	% For the externalization, set correct file name and only externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzsetnextfilename{#2}%
+% 	\edef\myprefix{\pwd}
+%    \end{macrocode}
+	% TODO: Problem: latexmk scheint es nicht zu merken, dass sich eine tikz-Datei in einem Unterverzeichnis geändert hat, kann das sein? Das normale Kompilieren des Bildes funktioniert, allein latexmk macht es nicht automatisch.
+	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case.
+%    \begin{macrocode}
+	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
+% 	\tikzsetexternalprefix{\myprefix}%
+	\tikzexternaldisable
+% 	\tikzscale@includeTikzSplitArguments{\tikzscale@pwd#2}#1%
+	\tikzscale@includeTikzSplitArguments{#2}#1%
+%    \end{macrocode}
+	% This is useful for unresized testing purposes.
+%    \begin{macrocode}
+% 	\input{\tikzscale@pwd#2.tikz}%
+	\endgroup
+}
+%    \end{macrocode}
+%^^A Tests:
+%^^A \includetikz{filename}\\
+%^^A \includetikz[width=1cm]{filename}\\
+%^^A \includetikz[height=1cm]{filename}\\
+%^^A \includetikz[height=1cm,width=1cm]{filename}\\
+%^^A \includetikz[width=1cm,height=1cm]{filename}
+%\end{macro}
+%
+%
+%\begin{macro}{\tikzscale@includeTikzSplitArguments}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includeTikzSplitArguments}{m>{\SplitList=}m>{\SplitList=}g}{%
+	\IfNoValueTF{#3}{%
+		\tikzscale@includeTikzOneArgument#2{#1}%
+	}{%
+		\tikzscale@includeTikzTwoArguments#2#3{#1}%
+	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@includeTikzOneArgument}
+% \cmd{\tikzscale@includeTikzOneArgument}{dimension}{length}{file name}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includeTikzOneArgument}{mmm}{%
+%    \end{macrocode}
+	% Use \cmd{\pgfmathsetmacro}, to allow calculations in the given argument.
+%    \begin{macrocode}
+	\pgfmathsetmacro{\tikzsize}{#2}%
+	\ifstrequal{#1}{width}{%
+		\tikzscale@scaleTo{\wd}{\input{\tikzscale@pwd#3.tikz}}%
+	}{%
+		\tikzscale@scaleTo{\ht}{\input{\tikzscale@pwd#3.tikz}}%
+	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@includeTikzTwoArguments}
+% \cmd{\tikzscale@includeTikzOneArgument}{firstDimension}{firstLength}{secondDimension}{secondLength}{file name}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includeTikzTwoArguments}{mmmmm}{%
+	\ifstrequal{#1}{width}{%
+		\pgfmathsetmacro{\tikzscale@width}{#2}%
+		\pgfmathsetmacro{\tikzscale@height}{#4}%
+	}{%
+		\pgfmathsetmacro{\tikzscale@width}{#4}%
+		\pgfmathsetmacro{\tikzscale@height}{#2}%
+	}%
+%    \end{macrocode}
+	% The plot currently only has approximately the given width currently, due to a (known) bug in pgfplots. Thus, do a final scaling to correct the difference.
+% 	\cmd{\tikzscale@includeTikzOneArgument}{width}{\cmd{\tikzscale@width}}{\#5}%
+%    \begin{macrocode}
+	\tikzscale@resizeTo{%
+		\input{\tikzscale@pwd#5.tikz}%
+	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@scaleTo}
+% \cmd{\scalteTo}{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}
+% The first argument determines if a specific width or a specific height should be achieved by scaling.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@scaleTo}{mm}{%
+%    \end{macrocode}
+	% When scaling a tikzpicture, only the drawings are scaled, but nodes are not scaled. So in general, there are horizontal or vertical areas, where the picture contains only unscaled nodes, and areas where the picture contains scalable drawings. Mathematically all scaled and all unscaled areas can be combined, so that there is one are area of fixed size and one variable sized area. Thus scaling only by multiplication of a factor is incorrect in general. To do the correct scaling, the fixed area size must be known. As there are two unknown parameters, i.e. fixed area size and variable area size, the fixed area size can be calculated by measuring the tikzpicture with two different scalings. A special scaling factor is used, to get the size close to the final size minimizing numerical and logical errors.
+%    \begin{macrocode}
+	\def\tikzscale@scale{1}%
+	\tikzscale@measureSize{\measuredFirst}{#1}{#2}%
+	\pgfmathsetmacro{\tikzscale@scale}{\tikzsize/\measuredFirst}%
+	\tikzscale@measureSize{\measuredSecond}{#1}{#2}%
+%    \end{macrocode}
+	% It can happen, that there are no variable areas. Furthermore, the original size could already fit. Avoid numerical problems in both cases by directly drawing the picture. Do not compare the float values directly, as TeX's precision is quite limited.
+%    \begin{macrocode}
+	\pgfmathparse{abs(\measuredSecond - \tikzsize)}%
+%    \end{macrocode}
+	% Externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzexternalenable
+	\ifdimless{\pgfmathresult pt}{0.1pt}{%
+		#2%
+	}{%
+%    \end{macrocode}
+		% We know, that the variable sized area scales with the scaling factor, thus it holds
+		% \cmd{\scale} * \cmd{\variableFirst} = \cmd{\variableSecond},
+		% with \cmd{\variableFirst} = \cmd{\measuredFirst} - \cmd{\fixedSize}
+		% and \cmd{\variableSecond} = \cmd{\measuredSecond} - \cmd{\fixedSize},
+		% which can be solved by substituttion and results in
+%    \begin{macrocode}
+		\pgfmathsetmacro{\fixedSize}{(\tikzscale@scale*\measuredFirst - \measuredSecond) / (\tikzscale@scale - 1)}%
+%    \end{macrocode}
+		% Now, to get the correct scaling factor, only take the variable areas into account, as it holds
+		% \cmd{\scaleFinal} = \cmd{\variableSizeFinal} / \cmd{\variableSizeOriginal}
+		% with \cmd{\variableSizeFinal} = \cmd{\tikzsize} - \cmd{\fixedSize}
+		% and \cmd{\variableSizeOriginal} = \cmd{\measuredFirst} - \cmd{\fixedSize},
+		% which results in
+%    \begin{macrocode}
+		\pgfmathsetmacro{\tikzscale@scale}{(\tikzsize - \fixedSize) / (\measuredFirst - \fixedSize)}%
+%    \end{macrocode}
+		% Additionally or alternatively the brute force approach to iteratively improve the solution can be used.
+	%^^A 	\foreach \l in {1,...,3}{%
+	%^^A 		\begin{lrbox}{\tikzscale@measuredSize}\BODY\end{lrbox}%
+	%^^A 		\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale*\tikzsize/#1\tikzscale@measuredSize}%
+	%^^A 	}%
+		% Finally, include the picture.
+%    \begin{macrocode}
+		#2%
+	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@resizeTo}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@resizeTo}{m}{%
+%    \end{macrocode}
+	% Using the lrbox here saves creating the content twice.
+%    \begin{macrocode}
+	\begin{lrbox}{\tikzscale@measuredSize}#1\end{lrbox}%
+	\pgfmathsetmacro{\tikzscale@width}{2*\tikzscale@width-\wd\tikzscale@measuredSize}%
+	\pgfmathsetmacro{\tikzscale@height}{2*\tikzscale@height-\ht\tikzscale@measuredSize}%
+%    \end{macrocode}
+	% Externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzexternalenable
+	#1%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\StopEventually{^^A
+%  \PrintChanges
+%^^A  \PrintIndex
+%}
+%
+%\Finale

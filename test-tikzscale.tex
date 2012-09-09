@@ -1,0 +1,23 @@
+\documentclass{article}
+
+% \usepackage[hypertexnames=false]{hyperref}
+% \usepackage{cleveref}
+\usepackage{lua-visual-debug}
+\usepackage{tikzscale}
+
+% \newcounter{Hequation}
+% \renewcommand{\theHequation}{\thechapter.\arabic{Hequation}}
+% \makeatletter
+% \g@addto@macro\equation{\stepcounter{Hequation}}
+% \makeatother
+
+\begin{document}
+	\section*{Tests}
+	\begin{itemize}
+		\item Normal input command\\%
+			\input{testRectangle.tikz}%
+		\item Use includtikz without ending\\%
+			\includetikz[width=\linewidth]{testRectangle}%
+	\end{itemize}
+\end{document}
+
