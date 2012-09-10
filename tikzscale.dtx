@@ -18,7 +18,6 @@ Usage: \usepackage{tikzscale}
 
 The package provides the \includetikz command, which has the same syntax as the often used \includegraphics command. As an example write \includetikz{myTikZFile.tikz} instead of \includegraphics{myJPEGFile.jpeg}, where myTikZFile.tikz is an existing text file containing everything from \begin{tikzpicture} to \end{tikzpicture}. To actually do some scaling of the included TikZ file, give an absolute width or height in the optional argument, e.g. \includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
 %</readme>
-%<readme>\endbatchfile
 %<*internal>
 \fi
 \def\nameofplainTeX{plain}
@@ -61,19 +60,19 @@ and the derived files           tikzscale.ins,
 \endpostamble
 \usedir{tex/latex/tikzscale}
 \generate{
-  \file{tikzscale.sty}{\from{tikzscale.dtx}{package}}
+  \file{\jobname.sty}{\from{\jobname.dtx}{package}}
 }
 %</install>
 %<install>\endbatchfile
 %<*internal>
 \usedir{source/latex/tikzscale}
 \generate{
-  \file{tikzscale.ins}{\from{tikzscale.dtx}{install}}
+  \file{\jobname.ins}{\from{\jobname.dtx}{install}}
 }
 \nopreamble\nopostamble
 \usedir{doc/latex/tikzscale}
 \generate{
-  \file{README.txt}{\from{tikzscale.dtx}{readme}}
+  \file{README.txt}{\from{\jobname.dtx}{readme}}
 }
 \ifx\fmtname\nameofplainTeX
   \expandafter\endbatchfile
@@ -84,7 +83,6 @@ and the derived files           tikzscale.ins,
 %<*package>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{tikzscale}[2012/09/10 v0.1 tikzscale LaTeX package]
-\PassOptionsToPackage{hypertexnames=false}{hyperref}
 \RequirePackage{tikz}
 \RequirePackage{pgfplots}
 \RequirePackage{etoolbox}
@@ -97,7 +95,6 @@ and the derived files           tikzscale.ins,
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{amsmath}
-\usepackage{\jobname}
 \usepackage[numbered]{hypdoc}
 \hypersetup{pdftitle=The tikzscale package}
 \EnableCrossrefs
