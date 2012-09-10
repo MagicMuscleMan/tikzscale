@@ -138,6 +138,13 @@ and the derived files           tikzscale.ins,
 %
 % \subsection{Externalization library}
 %
+% \section{Further Ideas}
+% \begin{itemize}
+%     \item The command should not be named \cmd{\includetikz}, but \cmd{\includegraphics}
+%     \item Using \cmd{\sbox}, \cmd{\usebox}, \cmd{\savebox} (LaTeX reference from Kile) should improve speed
+%     \item TODO: Problem: latexmk scheint es nicht zu merken, dass sich eine tikz-Datei in einem Unterverzeichnis geändert hat, kann das sein? Das normale Kompilieren des Bildes funktioniert, allein latexmk macht es nicht automatisch.
+% \end{itemize}
+%
 % \section{Contributions}
 % \begin{itemize}
 %     \item Any Name
@@ -180,8 +187,6 @@ and the derived files           tikzscale.ins,
 }
 %    \end{macrocode}
 %\end{macro}
-%
-%^^A TODO: mit \sbox, \usebox, \savebox (LaTeX-Referenz von Kile), sollte manches hier schneller sein
 %
 %\begin{macro}{\tikzscale@scale}
 % Set these as default values to allow a preview of tikzpicture environments in ktikz or the like. Global definitions are necessary, as local definitions result in errors in some situations.
@@ -244,7 +249,6 @@ and the derived files           tikzscale.ins,
 	\tikzsetnextfilename{#2}%
 % 	\edef\myprefix{\pwd}
 %    \end{macrocode}
-	% TODO: Problem: latexmk scheint es nicht zu merken, dass sich eine tikz-Datei in einem Unterverzeichnis geändert hat, kann das sein? Das normale Kompilieren des Bildes funktioniert, allein latexmk macht es nicht automatisch.
 	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case.
 %    \begin{macrocode}
 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
