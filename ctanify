@@ -1,0 +1,2 @@
+#!/bin/sh
+ctanify tikzscale.ins tikzscale.pdf README test-tikzscale.tex test-tikzscale.pdf

@@ -5,18 +5,30 @@
 %</internal>
 %<*readme>
 ----------------------------------------------------------------
-tikzscale --- Absolute resizing of TikZ pictures and PGF plots without scaling text
-E-mail: pat_h@web.de
-Released under the LaTeX Project Public License v1.3c or later
-See http://www.latex-project.org/lppl.txt
+tikzscale --- Absolute resizing of TikZ pictures and PGF plots without
+              scaling text
+E-mail: pat_h@web.de Released under the LaTeX Project
+Public License v1.3c or later See http://www.latex-project.org/lppl.txt
 ----------------------------------------------------------------
 
-This is the tikzscale package, providing an interface similar to includegraphics for tikzpictures. It allows scaling of tikz images and pgfplots to a provided width or height without changing the text size.
+This is the tikzscale package, providing an interface similar to
+includegraphics for tikzpictures. It allows scaling of tikz images and
+pgfplots to a provided width or height without changing the text size.
 
 Usage: \usepackage{tikzscale}
     or \usepackage[loadFromCurrentDirectory]{tikzscale}
 
-The package provides the \includetikz command, which has the same syntax as the often used \includegraphics command. As an example write \includetikz{myTikZFile.tikz} instead of \includegraphics{myJPEGFile.jpeg}, where myTikZFile.tikz is an existing text file containing everything from \begin{tikzpicture} to \end{tikzpicture}. To actually do some scaling of the included TikZ file, give an absolute width or height in the optional argument, e.g. \includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
+The package provides the \includetikz command, which has the
+same syntax as the often used \includegraphics command. As
+an example write
+\includetikz{myTikZFile.tikz}
+instead of
+\includegraphics{myJPEGFile.jpeg},
+where myTikZFile.tikz is an existing text file containing everything
+from \begin{tikzpicture} to \end{tikzpicture}. To actually do some
+scaling of the included TikZ file, give an absolute width or height
+in the optional argument, e.g.
+\includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
 %</readme>
 %<*internal>
 \fi
@@ -154,6 +166,9 @@ and the derived files           tikzscale.ins,
 % \section{Implementation}
 % The basic idea is
 %
+% \iffalse
+%<*package>
+% \fi
 %
 %\begin{macro}{\DeclareOption}
 % This is a package option to decide if the package currfile should be used when loading tikzpicture files. If it should not be used, set \cmd{\tikzscale@pwd} to the empty command.
@@ -390,6 +405,10 @@ and the derived files           tikzscale.ins,
 }
 %    \end{macrocode}
 %\end{macro}
+%
+% \iffalse
+%</package>
+% \fi
 %
 %\StopEventually{^^A
 %  \PrintChanges
