@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[twocolumn]{article}
 
 % \usepackage[hypertexnames=false]{hyperref}
 % \usepackage{cleveref}
@@ -16,8 +16,23 @@
 	\begin{itemize}
 		\item Normal input command\\%
 			\input{testRectangle.tikz}%
-		\item Use includtikz without ending\\%
-			\includetikz[width=\linewidth]{testRectangle}%
+		\item Use includegraphics without file ending\\%
+			\includegraphics{testRectangle}%
+		\item Use includegraphics with file ending\\%
+			\includegraphics{testRectangle.tikz}%
+		\item Use includegraphics with column width\\%
+			\includegraphics[width=\linewidth]{testRectangle}%
+		\item Use includegraphics\\%
+			\includegraphics{example-grid-100x100bp.jpg}%
+		\item Use includegraphics with column width\\%
+			\includegraphics[width=\linewidth]{example-grid-100x100bp.jpg}%
+
+% 			/usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.eps
+% /usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.jpg
+% /usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.pdf
+% /usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.png
+% /usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.tex
+
 	\end{itemize}
 \end{document}
 

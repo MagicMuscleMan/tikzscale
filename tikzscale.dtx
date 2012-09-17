@@ -18,17 +18,19 @@ pgfplots to a provided width or height without changing the text size.
 Usage: \usepackage{tikzscale}
     or \usepackage[loadFromCurrentDirectory]{tikzscale}
 
-The package provides the \includetikz command, which has the
-same syntax as the often used \includegraphics command. As
-an example write
-\includetikz{myTikZFile.tikz}
+The package adds support for TikZ files using the \includegraphics command.
+As an example write
+\includegraphics{myTikZFile.tikz}
 instead of
 \includegraphics{myJPEGFile.jpeg},
-where myTikZFile.tikz is an existing text file containing everything
-from \begin{tikzpicture} to \end{tikzpicture}. To actually do some
-scaling of the included TikZ file, give an absolute width or height
-in the optional argument, e.g.
-\includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
+with myTikZFile.tikz being the file name of a text file containing
+everything from \begin{tikzpicture} to \end{tikzpicture}. To actually
+do some scaling of the included TikZ file, give either an absolute width
+or an absolute height in the optional argument, e.g.
+\tikzscale@includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
+If the file contains a plot created with the pgfplots package, set both
+width and height via the optional argument, e.g.
+\tikzscale@includetikz[width=\linewidth,height=0.4\linewidth]{myPGFPlot.tikz}.
 %</readme>
 %<*internal>
 \fi
@@ -95,11 +97,13 @@ and the derived files           tikzscale.ins,
 %<*package>
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{tikzscale}[2012/09/10 v0.1 tikzscale LaTeX package]
-\RequirePackage{tikz}
-\RequirePackage{pgfplots}
+\RequirePackage{tikz}%TODO: nicht laden, falls nicht unbedingt nötig, sondern warten ob Nutzer geladen hat
+\RequirePackage{pgfplots}%TODO: nicht laden, falls nicht unbedingt nötig, sondern warten ob Nutzer geladen hat
 \RequirePackage{etoolbox}
-\RequirePackage{etextools}
 \RequirePackage{xparse}
+\RequirePackage{graphicx}
+\RequirePackage{letltxmacro}
+\RequirePackage{xstring}
 %</package>
 %<*driver>
 \documentclass{ltxdoc}
@@ -149,9 +153,10 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%     \item The command should not be named \cmd{\includetikz}, but \cmd{\includegraphics}
+%     \item Test different directories in findExactFileName
 %     \item Using \cmd{\sbox}, \cmd{\usebox}, \cmd{\savebox} (LaTeX reference from Kile) should improve speed
 %     \item TODO: Problem: latexmk scheint es nicht zu merken, dass sich eine tikz-Datei in einem Unterverzeichnis geändert hat, kann das sein? Das normale Kompilieren des Bildes funktioniert, allein latexmk macht es nicht automatisch.
+%     \item \href{darauf verweisen}{http://tex.stackexchange.com/q/71583/7323}
 % \end{itemize}
 %
 % \section{Contributions}
@@ -189,9 +194,11 @@ and the derived files           tikzscale.ins,
 \ProvideDocumentCommand{\tikzscale@pwd}{}{}
 %    \end{macrocode}
 %
-% Provide dummy commands, if the externalization library has not been loaded during the preamble.
 %    \begin{macrocode}
 \AtEndPreamble{%
+%    \end{macrocode}
+	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
+%    \begin{macrocode}
 	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
 	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
@@ -243,44 +250,132 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\includetikz}
+%\begin{macro}{\edocsvlist}
+% This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\docsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
+%    \begin{macrocode}
+% \def\edocsvlist#1{%
+\NewDocumentCommand{\edocsvlist}{m}{%
+	\edef\tikzscale@edocsvlist{#1}%
+	\expandafter\docsvlist\expandafter{\tikzscale@edocsvlist}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\includegraphics}
+%    \begin{macrocode}
+\AtEndPreamble{%
+%    \end{macrocode}
+	% Add the TikZ file extensions to the \href{graphicx file extensions}{http://tex.stackexchange.com/a/45502}.
+%    \begin{macrocode}
+	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF}%
+	\DeclareGraphicsExtensions{\tikzscale@tikzFileExtensions,\Gin@extensions}%
+%    \end{macrocode}
+%     \item If the command is named \cmd{\tikzscale@includetikz}, then everything is simpler, if it is named \cmd{\includegraphics} (\href{graphicx documentation}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), it could be more consistent from a user point of view (not 0.1 content). The idea would be to first get the correct file name (type included), then determine the type and call either the original includegraphics command or the tikzscale command
+%    \begin{macrocode}
+	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
+	\RenewDocumentCommand{\includegraphics}{om}{%
+%    \end{macrocode}
+		% Find the exact file name, as the ending and the path could be omitted.
+%    \begin{macrocode}
+		\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
+%    \end{macrocode}
+		% Check if the found file is a TikZ file.
+	%    \begin{macrocode}
+% 		FileName: \tikzscale@fileName\\
+		\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}
+		\ifcsdef{tikzscale@testTikzFile}{
+			\def\function{\tikzscale@includetikz}%
+% 			Funktion: includetikz\\
+		}{%
+			\def\function{\tikzscale@oldincludegraphics}%
+% 			Funktion: includegraphics\\
+		}%
+% 		\show\function
+		\IfNoValueTF{#1}{%
+			\function{\tikzscale@fileName}%
+% 			\expandnext{\csuse{function}}{\tikzscale@fileName}%
+		}{%
+			\function[#1]{\tikzscale@fileName}%
+% 			\ExpandNext{\csuse{function}[#1]}{\tikzscale@fileName}%
+		}%
+	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+% \begin{macro}{\tikzscale@findExactFileName}
+% Find the exact file name of a graphic file by testing several paths and file endings if there are degrees of freedom. The file name is saved in the command sequence name given by the first argument.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@findExactFileName}{mm}{%
+	%    \end{macrocode}
+	% Create a helper function used inside the file ending evaluation.
+	%    \begin{macrocode}
+	\def\do##1{%
+		\IfFileExists{#2##1}{%
+			\csdef{#1}{#2##1}\listbreak%
+		}{}%
+	}%
+%    \end{macrocode}
+	% Test all possible file extensions and do not forget that the extension might already be given.
+%    \begin{macrocode}
+	\edocsvlist{{},\Gin@extensions}%
+%    \end{macrocode}
+%^^A \tikzscale@pwd vielleicht verwenden, um Verzeichnis zu bestimmen
+	%^^A TODO: Wenn nichts gefunden wird, sollte der Pfad selbst zurückgegeben werden, da sich dann includegraphics darum kümmern muss
+%    \begin{macrocode}
+}
+%    \end{macrocode}
+%\end{macro}
+%
+% \begin{macro}{\tikzscale@findExactFileName}
+% The first argument is the macro name (without backslash), which gets defined if the file is a tikzfile.
+% The second argument is the file name.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@isTikzFile}{mm}{%
+	%    \end{macrocode}
+	% Create a helper function used inside the evaluation.
+	%    \begin{macrocode}
+	\def\do##1{%
+		\IfEndWith{#2}{##1}{%
+			\csdef{#1}{}\listbreak%
+		}{}%
+	}%
+%    \end{macrocode}
+	% Delete macro so that defining it is really indicating something.
+%    \begin{macrocode}
+	\csundef{#1}%
+	\edocsvlist{\tikzscale@tikzFileExtensions}%
+}
+%    \end{macrocode}
+%\end{macro}
+
+%
+%\begin{macro}{\tikzscale@includetikz}
 % This command allows the inclusion of a tikz file like a graphics file. Thus instead of writing
 % \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % write
-% \cmd{\includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
+% \cmd{\tikzscale@includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for pgfplots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
-\NewDocumentCommand{\includetikz}{>{\SplitList,}O{width=\linewidth}m}{%
+\NewDocumentCommand{\tikzscale@includetikz}{>{\SplitList,}om}{%
 %    \end{macrocode}
 	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
 %    \begin{macrocode}
-	\begingroup
-%    \end{macrocode}
-	% For the externalization, set correct file name and only externalize the graphic with the final size.
-%    \begin{macrocode}
-	\tikzsetnextfilename{#2}%
-% 	\edef\myprefix{\pwd}
-%    \end{macrocode}
-	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case.
-%    \begin{macrocode}
-	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
-% 	\tikzsetexternalprefix{\myprefix}%
-	\tikzexternaldisable
-% 	\tikzscale@includeTikzSplitArguments{\tikzscale@pwd#2}#1%
-	\tikzscale@includeTikzSplitArguments{#2}#1%
-%    \end{macrocode}
-	% This is useful for unresized testing purposes.
-%    \begin{macrocode}
-% 	\input{\tikzscale@pwd#2.tikz}%
-	\endgroup
+	\IfNoValueTF{#1}{%
+		\input{#2}%
+	}{%
+		\begingroup
+		\tikzscale@includeTikzSplitArguments{#2}#1%
+		\endgroup
+	}
 }
 %    \end{macrocode}
 %^^A Tests:
-%^^A \includetikz{filename}\\
-%^^A \includetikz[width=1cm]{filename}\\
-%^^A \includetikz[height=1cm]{filename}\\
-%^^A \includetikz[height=1cm,width=1cm]{filename}\\
-%^^A \includetikz[width=1cm,height=1cm]{filename}
+%^^A \tikzscale@includetikz{filename}\\
+%^^A \tikzscale@includetikz[width=1cm]{filename}\\
+%^^A \tikzscale@includetikz[height=1cm]{filename}\\
+%^^A \tikzscale@includetikz[height=1cm,width=1cm]{filename}\\
+%^^A \tikzscale@includetikz[width=1cm,height=1cm]{filename}
 %\end{macro}
 %
 %
@@ -305,9 +400,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\pgfmathsetmacro{\tikzsize}{#2}%
 	\ifstrequal{#1}{width}{%
-		\tikzscale@scaleTo{\wd}{\input{\tikzscale@pwd#3.tikz}}%
+		\tikzscale@scaleTo{\wd}{\input{#3}}{#3}%
 	}{%
-		\tikzscale@scaleTo{\ht}{\input{\tikzscale@pwd#3.tikz}}%
+		\tikzscale@scaleTo{\ht}{\input{#3}}{#3}%
 	}%
 }
 %    \end{macrocode}
@@ -326,20 +421,21 @@ and the derived files           tikzscale.ins,
 	}%
 %    \end{macrocode}
 	% The plot currently only has approximately the given width currently, due to a (known) bug in pgfplots. Thus, do a final scaling to correct the difference.
-% 	\cmd{\tikzscale@includeTikzOneArgument}{width}{\cmd{\tikzscale@width}}{\#5}%
 %    \begin{macrocode}
-	\tikzscale@resizeTo{%
-		\input{\tikzscale@pwd#5.tikz}%
-	}%
+	\tikzscale@resizeTo{#5}%
 }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scaleTo}
-% \cmd{\scalteTo}{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}
+% \cmd{\scalteTo}{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}
 % The first argument determines if a specific width or a specific height should be achieved by scaling.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@scaleTo}{mm}{%
+\NewDocumentCommand{\tikzscale@scaleTo}{mmm}{%
+%    \end{macrocode}
+	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
+%    \begin{macrocode}
+	\tikzscale@conditionalDisableExternalization
 %    \end{macrocode}
 	% When scaling a tikzpicture, only the drawings are scaled, but nodes are not scaled. So in general, there are horizontal or vertical areas, where the picture contains only unscaled nodes, and areas where the picture contains scalable drawings. Mathematically all scaled and all unscaled areas can be combined, so that there is one are area of fixed size and one variable sized area. Thus scaling only by multiplication of a factor is incorrect in general. To do the correct scaling, the fixed area size must be known. As there are two unknown parameters, i.e. fixed area size and variable area size, the fixed area size can be calculated by measuring the tikzpicture with two different scalings. A special scaling factor is used, to get the size close to the final size minimizing numerical and logical errors.
 %    \begin{macrocode}
@@ -354,7 +450,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Externalize the graphic with the final size.
 %    \begin{macrocode}
-	\tikzexternalenable
+	\tikzscale@conditionalEnableExternalization{#3}
 	\ifdimless{\pgfmathresult pt}{0.1pt}{%
 		#2%
 	}{%
@@ -389,19 +485,51 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@resizeTo}
+%\cmd{\tikzscale@resizeTo}{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizeTo}{m}{%
 %    \end{macrocode}
+	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
+%    \begin{macrocode}
+	\tikzscale@conditionalDisableExternalization
+%    \end{macrocode}
 	% Using the lrbox here saves creating the content twice.
 %    \begin{macrocode}
-	\begin{lrbox}{\tikzscale@measuredSize}#1\end{lrbox}%
+	\begin{lrbox}{\tikzscale@measuredSize}\input{#1}\end{lrbox}%
 	\pgfmathsetmacro{\tikzscale@width}{2*\tikzscale@width-\wd\tikzscale@measuredSize}%
 	\pgfmathsetmacro{\tikzscale@height}{2*\tikzscale@height-\ht\tikzscale@measuredSize}%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
+	% Really plot the graphic with the final size.
 %    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{#1}
+	\input{#1}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@conditionalDisableExternalization}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@conditionalDisableExternalization}{}{%
+	\tikzexternaldisable
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@conditionalEnableExternalization}
+% Activate externalization of TikZ graphics iff it had been active before definitely disabling it for measurement purposes. The argument contains the file name.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@conditionalEnableExternalization}{m}{%
+%    \end{macrocode}
+	% For the externalization, set correct file name and only externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzsetnextfilename{#1}%
+% 	\edef\myprefix{\pwd}
+%    \end{macrocode}
+	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case. This might be unnecessary due to the newly created path lookup logic.
+%    \begin{macrocode}
+% 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
+% 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
 	\tikzexternalenable
-	#1%
 }
 %    \end{macrocode}
 %\end{macro}
