@@ -268,6 +268,7 @@ and the derived files           tikzscale.ins,
 	% Add the TikZ file extensions to the \href{graphicx file extensions}{http://tex.stackexchange.com/a/45502}.
 %    \begin{macrocode}
 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF}%
+% 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF,.tex,.TEX}%
 	\DeclareGraphicsExtensions{\tikzscale@tikzFileExtensions,\Gin@extensions}%
 %    \end{macrocode}
 %     \item If the command is named \cmd{\tikzscale@includetikz}, then everything is simpler, if it is named \cmd{\includegraphics} (\href{graphicx documentation}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), it could be more consistent from a user point of view (not 0.1 content). The idea would be to first get the correct file name (type included), then determine the type and call either the original includegraphics command or the tikzscale command
