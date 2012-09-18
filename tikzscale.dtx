@@ -153,7 +153,6 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%     \item Test different directories in findExactFileName
 %     \item Using \cmd{\sbox}, \cmd{\usebox}, \cmd{\savebox} (LaTeX reference from Kile) should improve speed
 %     \item TODO: Problem: latexmk scheint es nicht zu merken, dass sich eine tikz-Datei in einem Unterverzeichnis geändert hat, kann das sein? Das normale Kompilieren des Bildes funktioniert, allein latexmk macht es nicht automatisch.
 %     \item \href{darauf verweisen}{http://tex.stackexchange.com/q/71583/7323}
@@ -243,6 +242,18 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\eforcsvlist}
+% These is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forcsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
+%    \begin{macrocode}
+% \def\eforcsvlist#1#2{%
+\NewDocumentCommand{\eforcsvlist}{mm}{%
+	\edef\tikzscale@eforcsvlist{#2}%
+	\expandafter\forcsvlist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@eforcsvlist}%
+}
+%    \end{macrocode}
+%\end{macro}
+
+%
 %\begin{macro}{\includegraphics}
 %    \begin{macrocode}
 \AtEndPreamble{%
@@ -257,7 +268,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\ifdef{\currfiledir}{%
 % 		\graphicspath{{\currfiledir}{}\Ginput@path}%
-		\def\tikzscale@graphicspath{abc,\currfiledir,}%
+		\def\tikzscale@graphicspath{\currfiledir,{}}%
 	}{}%
 %    \end{macrocode}
 %     \item If the command is named \cmd{\tikzscale@includetikz}, then everything is simpler, if it is named \cmd{\includegraphics} (\href{graphicx documentation}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), it could be more consistent from a user point of view (not 0.1 content). The idea would be to first get the correct file name (type included), then determine the type and call either the original includegraphics command or the tikzscale command
@@ -298,15 +309,18 @@ and the derived files           tikzscale.ins,
 	%    \end{macrocode}
 	% Create a helper function used inside the file ending evaluation.
 	%    \begin{macrocode}
-	\def\do##1{%
-		\IfFileExists{#2##1}{%
-			\csdef{#1}{#2##1}\listbreak%
-		}{}%
-	}%
+	\def\tikzscale@checkDirectory##1{%
+		\def\tikzscale@checkExtension####1{%
+			\IfFileExists{##1#2####1}{%
+				\csdef{#1}{##1#2####1}\listbreak%
+			}{}%
+		}%
 %    \end{macrocode}
 	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{current content}{http://tex.stackexchange.com/a/45502} set by \cmd{\DeclareGraphicsExtensions}.
 %    \begin{macrocode}
-	\edocsvlist{{},\Gin@extensions}%
+		\eforcsvlist{\tikzscale@checkExtension}{{},\Gin@extensions}%
+	}%
+	\eforcsvlist{\tikzscale@checkDirectory}{\tikzscale@graphicspath}%
 %    \end{macrocode}
 	% If no file has been found, return the given file name, as includegraphics should try its best.
 %    \begin{macrocode}
