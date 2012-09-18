@@ -147,7 +147,7 @@ and the derived files           tikzscale.ins,
 % \section{Compatibility}
 % \subsection{Load Order}
 %
-% \subsection{fink and currfile}
+% \subsection{currfile}
 %
 % \subsection{Externalization library}
 %
@@ -175,25 +175,7 @@ and the derived files           tikzscale.ins,
 %<*package>
 % \fi
 %
-%\begin{macro}{\DeclareOption}
-% This is a package option to decide if the package currfile should be used when loading tikzpicture files. If it should not be used, set \cmd{\tikzscale@pwd} to the empty command.
-%    \begin{macrocode}
-\DeclareOption{loadFromCurrentDirectory}{
-%    \end{macrocode}
-	% It is not allowed to load a package inside of \cmd{\DeclareOption}, so delay the loading (http://newsgroups.derkeiler.com/Archive/De/de.comp.text.tex/2006-03/msg01017.html)
-	%    \begin{macrocode}
-	\def\tikzscale@loadCurrfile{}
-}
-\ProcessOptions\relax
-\ifdef{\tikzscale@loadCurrfile}{
-	\RequirePackage{fink}
-	\def\tikzscale@pwd{\finkdir/}
-% 	\RequirePackage{currfile}
-% 	\def\tikzscale@pwd{\currfiledir}
-}{}
-\ProvideDocumentCommand{\tikzscale@pwd}{}{}
-%    \end{macrocode}
-%
+%\begin{macro}{\tikzexternal}
 %    \begin{macrocode}
 \AtEndPreamble{%
 %    \end{macrocode}
@@ -271,6 +253,13 @@ and the derived files           tikzscale.ins,
 % 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF,.tex,.TEX}%
 	\DeclareGraphicsExtensions{\tikzscale@tikzFileExtensions,\Gin@extensions}%
 %    \end{macrocode}
+	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{current content}{http://tex.stackexchange.com/a/58404}.
+%    \begin{macrocode}
+	\ifdef{\currfiledir}{%
+% 		\graphicspath{{\currfiledir}{}\Ginput@path}%
+		\def\tikzscale@graphicspath{abc,\currfiledir,}%
+	}{}%
+%    \end{macrocode}
 %     \item If the command is named \cmd{\tikzscale@includetikz}, then everything is simpler, if it is named \cmd{\includegraphics} (\href{graphicx documentation}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), it could be more consistent from a user point of view (not 0.1 content). The idea would be to first get the correct file name (type included), then determine the type and call either the original includegraphics command or the tikzscale command
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
@@ -282,22 +271,16 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Check if the found file is a TikZ file.
 	%    \begin{macrocode}
-% 		FileName: \tikzscale@fileName\\
 		\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}
 		\ifcsdef{tikzscale@testTikzFile}{
 			\def\function{\tikzscale@includetikz}%
-% 			Funktion: includetikz\\
 		}{%
 			\def\function{\tikzscale@oldincludegraphics}%
-% 			Funktion: includegraphics\\
 		}%
-% 		\show\function
 		\IfNoValueTF{#1}{%
 			\function{\tikzscale@fileName}%
-% 			\expandnext{\csuse{function}}{\tikzscale@fileName}%
 		}{%
 			\function[#1]{\tikzscale@fileName}%
-% 			\ExpandNext{\csuse{function}[#1]}{\tikzscale@fileName}%
 		}%
 	}%
 }
@@ -309,6 +292,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@findExactFileName}{mm}{%
 	%    \end{macrocode}
+	% Delete the return variable if it already exists to allow checking if a file has been found.
+	%    \begin{macrocode}
+	\csundef{#1}
+	%    \end{macrocode}
 	% Create a helper function used inside the file ending evaluation.
 	%    \begin{macrocode}
 	\def\do##1{%
@@ -317,13 +304,15 @@ and the derived files           tikzscale.ins,
 		}{}%
 	}%
 %    \end{macrocode}
-	% Test all possible file extensions and do not forget that the extension might already be given.
+	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{current content}{http://tex.stackexchange.com/a/45502} set by \cmd{\DeclareGraphicsExtensions}.
 %    \begin{macrocode}
 	\edocsvlist{{},\Gin@extensions}%
 %    \end{macrocode}
-%^^A \tikzscale@pwd vielleicht verwenden, um Verzeichnis zu bestimmen
-	%^^A TODO: Wenn nichts gefunden wird, sollte der Pfad selbst zurückgegeben werden, da sich dann includegraphics darum kümmern muss
+	% If no file has been found, return the given file name, as includegraphics should try its best.
 %    \begin{macrocode}
+	\ifcsundef{#1}{%
+		\csdef{#1}{#2}%
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
