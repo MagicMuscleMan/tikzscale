@@ -1,16 +1,10 @@
 \documentclass[twocolumn]{article}
 
-% \usepackage[hypertexnames=false]{hyperref}
-% \usepackage{cleveref}
 \usepackage{lua-visual-debug}
 \usepackage{tikzscale}
+\usepackage{tikz}
+\usepackage{pgfplots}
 \usepackage{currfile}
-
-% \newcounter{Hequation}
-% \renewcommand{\theHequation}{\thechapter.\arabic{Hequation}}
-% \makeatletter
-% \g@addto@macro\equation{\stepcounter{Hequation}}
-% \makeatother
 
 \begin{document}
 	\section*{Tests}
@@ -21,8 +15,10 @@
 			\includegraphics{testRectangle}%
 		\item Use includegraphics with file ending\\%
 			\includegraphics{testRectangle.tikz}%
-		\item Use includegraphics with column width\\%
+		\item Use includegraphics with scaling to the column's width\\%
 			\includegraphics[width=\linewidth]{testRectangle}%
+		\item Use includegraphics with scaling while having column width already\\%
+			\includegraphics[width=\linewidth]{linewidth}%
 		\item Use includegraphics with jpg\\%
 			\includegraphics{example-grid-100x100bp.jpg}%
 		\item Use includegraphics with pdf\\%
@@ -33,6 +29,10 @@
 % 			\includegraphics{example-grid-100x100bp.eps}%
 		\item Use includegraphics with column width\\%
 			\includegraphics[width=\linewidth]{example-grid-100x100bp.jpg}%
+		\item Use pgfplots without optional parameter\\%
+			\includegraphics{pgfplots-test}%
+		\item Use pgfplots with given width and height\\%
+			\includegraphics[width=\linewidth,height=0.3\linewidth]{pgfplots-test}%
 	\end{itemize}
 \end{document}
 
