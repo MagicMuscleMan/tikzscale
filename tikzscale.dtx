@@ -416,7 +416,9 @@ and the derived files           tikzscale.ins,
 	\ifdef{\currfiledir}{%
 % 		\graphicspath{{\currfiledir}{}\Ginput@path}%
 		\def\tikzscale@graphicspath{\currfiledir,{}}%
-	}{}%
+	}{%
+		\def\tikzscale@graphicspath{{}}%
+	}%
 %    \end{macrocode}
 %     \item Save the \cmd{\includegraphics} (\href{command}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), to have a consistent user interface.
 %    \begin{macrocode}
