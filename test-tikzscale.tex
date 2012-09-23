@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{currfile}
+\usepackage{lmodern}
 
 \begin{document}
 	\section*{Tests}
@@ -33,6 +34,12 @@
 			\includegraphics{pgfplots-test}%
 		\item Use pgfplots with given width and height\\%
 			\includegraphics[width=\linewidth,height=0.3\linewidth]{pgfplots-test}%
+		\item Use \texttt{input} with pgfplots and given width and height\\%
+			\makeatletter%
+			\gdef\tikzscale@width{\linewidth}%
+			\gdef\tikzscale@height{0.3\linewidth}%
+			\makeatother%
+			\input{pgfplots-test.tikz}%
 	\end{itemize}
 \end{document}
 

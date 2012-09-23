@@ -1,5 +1,5 @@
 \begin{tikzpicture}
-	\begin{axis}
+	\begin{axis}[scale only axis]
 		\addplot {x^2 - x + 4};
 	\end{axis}
 \end{tikzpicture}

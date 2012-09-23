@@ -12,8 +12,8 @@ Public License v1.3c or later See http://www.latex-project.org/lppl.txt
 ----------------------------------------------------------------
 
 This is the tikzscale package, providing an interface similar to
-includegraphics for tikzpictures. It allows scaling of tikz images and
-pgfplots to a provided width or height without changing the text size.
+includegraphics for tikzpictures. It allows scaling of TikZ images and
+PGFPlots to a provided width or height without changing the text size.
 
 Usage: \usepackage{tikzscale}
     or \usepackage[loadFromCurrentDirectory]{tikzscale}
@@ -28,7 +28,7 @@ everything from \begin{tikzpicture} to \end{tikzpicture}. To actually
 do some scaling of the included TikZ file, give either an absolute width
 or an absolute height in the optional argument, e.g.
 \tikzscale@includetikz[width=0.5\linewidth]{myTikZFile.tikz}.
-If the file contains a plot created with the pgfplots package, set both
+If the file contains a plot created with the PGFPlots package, set both
 width and height via the optional argument, e.g.
 \tikzscale@includetikz[width=\linewidth,height=0.4\linewidth]{myPGFPlot.tikz}.
 %</readme>
@@ -107,10 +107,23 @@ and the derived files           tikzscale.ins,
 \documentclass{ltxdoc}
 \usepackage[utf8]{inputenx}
 \usepackage[T1]{fontenc}
+\usepackage{subfig}
+\usepackage{booktabs}
+\usepackage{tabulary}
+\usepackage{tikzscale}
+\usepackage{tikz}
+\usepackage{xcolor}
 \usepackage{lmodern}
 \usepackage{amsmath}
+\usepackage{cleveref}
 \usepackage[numbered]{hypdoc}
 \hypersetup{pdftitle=The tikzscale package}
+\newcommand{\cell}[2][c]{%
+	\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}%
+}
+\newcommand{\rcell}[2][c]{%
+	\begin{tabular}[#1]{@{}r@{}}#2\end{tabular}%
+}
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
@@ -135,40 +148,185 @@ and the derived files           tikzscale.ins,
 %\maketitle
 %
 %\changes{v0.1}{2012/09/10}{First public release}
-%
 % \section{Introduction}
-% Relatives skalieren in Tikz vorhanden und absolutes Skalieren, wenn Text mitskaliert wird -> Neuerung: Absolut ohne Textskalierung
-% pgfplots erlaubt absolut, allerdings nur Näherungsalgorithmus -> Neuerung: Verbesserte Näherung, idealerweise quasi exakt
+% When dealing with graphics, there are different scaling demands. For \emph{absolute} scaling,  a width and/or height is given. Opposed to that, for relativ scaling, a horizontal and/or vertical scaling factor is needed. This package only is about absolute scaling. The different absolute scaling demand and their solutions are shown in table \ref{scalingDemands}.
+% \begin{table}
+	% \centering
+	% \caption[Graphic scaling methods.]{Absolute graphic scaling methods. If multiple methods are available, the most native one is shown. Methods which \textcolor{orange}{approximate} the scaling are shown in orange text color. \textcolor{blue}{Recommended} methods are shown in blue textcolor.}%^^A Note, that the first three methods in each table are absolute ones, whereas the last three methods are relative ones.}%
+	% \label{scalingDemands}
+	% \subfloat[Scaling with scaled text and line widths.]{^^A
+		% \begin{tabular}{rccc}%^^A{1.1\linewidth}{RCCC}
+			% \toprule
+			% scale & Images & TikZ/PGFPlots\\
+			% \midrule
+			% \rcell{to width\\proportionally} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \cell{\cmd{\resizebox}\\\texttt{\{\emph{width}\}\{!\}}}\\[0.8em]
+			% \rcell{to width\\keeping height} & \cell{\cmd{\resizebox}\\\texttt{\{\emph{width}\}\{\cmd{\height}\}}} & \cell{\cmd{\resizebox}\\\texttt{\{\emph{width}\}\{\cmd{\height}\}}}\\[0.8em]
+			% \rcell{to height\\proportionally} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \cell{\cmd{\resizebox}\\\texttt{\{!\}\{\emph{height}\}}}\\[0.8em]
+			% \rcell{to height\\keeping width} & \cell{\cmd{\resizebox}\\\texttt{\{\cmd{\width}\}\{\emph{height}\}}} & \cell{\cmd{\resizebox}\\\texttt{\{\cmd{\width}\}\{\emph{height}\}}}\\[0.8em]
+			% \rcell{to width\\and height} & \cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},height=\emph{unit}]}} & \cell{\cmd{\resizebox}\\\texttt{\{\emph{width}\}\{\emph{height}\}}}\\
+			%^^A horizontally & \cell{\cmd{\scalebox}\\\texttt{\{\emph{factor}\}[1]}} & \cell{\texttt{[transform canvas=}\\\texttt{\{xscale=\emph{factor}\}]}} & \texttt{[xscale=\emph{factor}]}\\[0.8em]
+			%^^A vertically & \cell{\cmd{\scalebox}\\\texttt{\{1\}[\emph{factor}]}} & \cell{\texttt{[transform canvas=}\\\texttt{\{yscale=\emph{factor}\}]}} & \texttt{[yscale=\emph{factor}]}\\[0.8em]
+			%^^A proportionally & \cell{\cmd{\scalebox}\\\texttt{\{\emph{factor}\}}} & \cell{\texttt{[transform canvas=}\\\texttt{\{scale=\emph{factor}\}]}} & \texttt{[scale=\emph{factor}]}\\
+			% \bottomrule
+		% \end{tabular}
+	% }\\%
+	% \subfloat[Scaling with unscaled text and line widths without tikzscale.]{^^A
+		% \begin{tabulary}{1.1\linewidth}{RCCC}
+			% \toprule
+			% scale & Images & TikZ & PGFPlots\\
+			% \midrule
+			% \rcell{to width\\proportionally} & -- & -- & \textcolor{orange}{\texttt{[width=\emph{unit}]}}\\[0.8em]
+			% \rcell{to width\\keeping height} & -- & -- & --\\[0.8em]
+			% \rcell{to height\\proportionally} & -- & -- & \textcolor{orange}{\texttt{[height=\emph{unit}]}}\\[0.8em]
+			% \rcell{to height\\keeping width} & -- & -- & --\\[0.8em]
+			% \rcell{to width\\and height} & -- & -- & \textcolor{orange}{\texttt{[width=\emph{unit},height=\emph{unit}]}}\\
+			%^^A horizontally & -- & \texttt{[xscale=\emph{factor}]} & --\\
+			%^^A vertically & -- & \texttt{[yscale=\emph{factor}]} & --\\
+			%^^A proportionally & -- & \texttt{[scale=\emph{factor}]} & --\\
+			% \bottomrule
+		% \end{tabulary}
+	% }\\%
+	% \subfloat[Scaling with unscaled text and line widths with tikzscale.]{^^A
+		% \begin{tabulary}{1.1\linewidth}{RCCC}
+			% \toprule
+			% scale & Images & TikZ & PGFPlots\\
+			% \midrule
+			% \rcell{to width\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \textcolor{orange}{\texttt{[width=\emph{unit}]}}\\[0.8em]
+			% \rcell{to width\\keeping height} & -- & -- & --\\[0.8em]
+			% \rcell{to height\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \textcolor{orange}{\texttt{[height=\emph{unit}]}}\\[0.8em]
+			% \rcell{to height\\keeping width} & -- & -- & --\\[0.8em]
+			% \rcell{to width\\and height} & -- & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},height=\emph{unit}]}}}\\
+			%^^A horizontally & -- & \texttt{[xscale=\emph{factor}]} & --\\
+			%^^A vertically & -- & \texttt{[yscale=\emph{factor}]} & --\\
+			%^^A proportionally & -- & \texttt{[scale=\emph{factor}]} & --\\
+			% \bottomrule
+		% \end{tabulary}
+	% }
+% \end{table}
 %
-% Drei Features: Pfadsuche aktuelles Verzeichnis (benötigt currfile), tikz laden über vereinheitlichtes Interface includegraphics und verbesserte Skalierung benötigt tikz oder pgfplots
-
-%     \href{darauf verweisen}{http://tex.stackexchange.com/q/71583/7323}
-
+% The tikzscale package adds and improves certain forms of absolute scaling for TikZ and PGFPlots, respectively. These scaling methods are the ones which are most useful, maybe even the only ones which are needed. During the scaling, the text sizes and line widths are left unscaled, which avoids inconsistency and visual distraction. PGFPlots itself can scale absolutely, but an approximation is used to achieve that. The tikzscale package uses more exact algorithms.
+%
+% Using tikzscale all relevant scaling methods share the same user interface with the well known \cmd{\includegraphics} command, enabling some of its features like automatic file extension detection for TikZ and PGFPlots, too. Furthermore, the \cmd{\includegraphics} is improved to look-up relative paths in the correct subdirectory, if a \LaTeX\ project is organized in subdirectories.
+%
+% Relative scaling methods are mostly useless, as the sizes of the used images are often arbitrary, either determined by some resolution for rastered images or some arbitrary unit vector sized for vector images, TikZ  and PGFPlots. For traditional images and TikZ pictures, only proportional scaling methods giving either a width or a height make sense, as otherwise they get heavily distorted if the original aspect ratio is changed. As PGFPlots can handle different aspect ratios and aspect ratios are normally not predefined for plots, its requirement is the opposite: A width and a height are needed to avoid getting arbitrary sizes. These requirements lead to the marked blue colors in table \ref{scalingDemands}.
+%
 % \section{Usage and Examples}
+% Loading the tikzscale package without loading other packages, does not do anything useful.
 %
-% \section{Compatibility}
-% \subsection{Load Order}
+% \subsection{TikZ}
+% If the tikzscale and the tikz packages are loaded, the \cmd{\includegraphics} command can be used to input and scale a tikzpicture environment located in a separate file.
+%
+% As an example create the following .tex-file.
+%
+% \vspace{0.5em}
+% \noindent\cmd{\documentclass\{minimal\}}\\
+% \cmd{\usepackage\{tikz\}}\\
+% \cmd{\usepackage\{tikzscale\}}\\
+% \cmd{\begin\{document\}}\\
+% \indent\texttt{\cmd{\includegraphics}[width=0.5\cmd{\linewidth}]\{linewidth.tikz\}}\\
+% \cmd{\end\{document\}}
+% \vspace{0.5em}
+%
+% Furthermore create the following .tikz-file and save it as linewidth.tikz in the same directory as the above .tex-file.
+%
+% \vspace{0.5em}
+% \noindent\cmd{\begin\{tikzpicture\}}\\
+% \indent\texttt{\cmd{\draw} (0,0) -- node \{center\} (\cmd{\linewidth},1);}\\
+% \cmd{\end\{tikzpicture\}}
+% \vspace{0.5em}
+%
+% The result of the complied .tex-file should look like this.\\%^^A
+%\noindent\includegraphics[width=0.5\linewidth]{linewidth.tikz}
+%
+% So although the original tikzpicture itself has the width of a complete line, it gets proportionally scaled down to half the width while being loaded from the \cmd{\includegraphics} command. Neither the line's thickness nor the text \texttt{center} are scaled. Compare the output to\\
+% \indent\texttt{\cmd{\input}\{linewidth.tikz\}}\\
+% \input{linewidth.tikz}\\
+% and\\
+% \indent\texttt{\cmd{\resizebox}\{0.5\cmd{\linewidth}\}\{!\}\{\cmd{\input}\{linewidth.tikz\}\}}\\
+% \resizebox{0.5\linewidth}{!}{\input{linewidth.tikz}}\\
+% to see tikzscale's benefit.
+%
+% \subsection{PGFPlots}
+% If the pgfplots package is loaded together with the tikzscale package, the user interface is the same. Instead of giving either a width or a height, both have to be given for pgfplots. So
+%
+% \vspace{0.5em}
+% \cmd{\input\{pgfplots-test.tikz\}}
+%
+% \vspace{0.5em}
+% \texttt{\cmd{\begin}\{tikzpicture\}\cmd{\begin}\{axis\}[width=3cm,height=2cm] \dots}
+% \vspace{0.5em}
+%
+% \noindent becomes
+%
+% \vspace{0.5em}
+% \cmd{\includegraphics[width=3cm,height=2cm]\{pgfplots-test.tikz\}}
+%
+% \vspace{0.5em}
+% \texttt{\cmd{\begin}\{tikzpicture\}\cmd{\begin}\{axis\} \dots}
+% \vspace{0.5em}
+%
+% The benefit is a more accurate scaling algorithm, as the scaling with PGFPlots can be quite coarse. Another win is the unified interface, which simplifies the sharing of plots between projects enormously, as one file and thus one plot can be included in different projects with different sizes.
+%
+% \subsection{Hints for TikZ and PGFPlots}
+% The whole tikzpicture environment must be in a separate file. This allows sharing of graphics between different \TeX\ projects and a unified user interface via \cmd{\includegraphics}. Having tikzpicture environments directly in a .tex-file is not supported, i.e.\ they do not benefit from the tikzscale package. Multiple tikzpicture environments in one .tikz-file are not supported, either. Put things which always belong together in a shared tikzpicture environment and things which might be used separately in the future in separate files for code sharing across projects. The file ending may be ommited in the \cmd{\includegraphics} command, if it is one of .tikz, .TIKZ, .TikZ, .pgf or .PGF. At the moment, use only \emph{either} width \emph{or} height for normal (i.e.\ non-PGFPlots) tikzpicture environments and use width \emph{and} height for tikzpicture environments which contain a PGFPlots' axis environment.
 %
 % \subsection{currfile}
+% If the tikzpicture package is loaded together with the \href{http://www.ctan.org/pkg/currfile}{currfile} package, another feature is activated. Suppose you have your project organized in the following directory tree with \textcolor{blue}{directories} shown in blue color:
+%
+% \vspace{0.5em}
+% \noindent \textcolor{blue}{projectDirectory}\\
+% \indent main.tex\\
+% \indent \textcolor{blue}{firstChapter}\\
+% \indent\indent firstChapter.tex\\
+% \indent\indent firstGraphicOfFirstChapter.jpeg\\
+% \indent\indent secondGraphicOfFirstChapter.tikz\\
+% \indent \textcolor{blue}{secondChapter}\\
+% \indent\indent secondChapter.tex\\
+% \indent\indent firstGraphicOfSecondChapter.tikz\\
+% \indent\indent secondGraphicOfSecondChapter.jpeg
+% \vspace{0.5em}
+%
+% Further suppose the chapter.tex files are \cmd{\input}ted in main.tex. Calling\\
+% \cmd{\includegraphics\{firstGraphicOfFirstChapter.jpeg\}}\\
+% in firstChapter.tex normally does not work. The reason is that the\\
+% \cmd{\input\{firstChapter.tex\}}\\
+% command in main.tex copies the content of firstChapter.tex into main.tex, so when the \cmd{\includegraphics} command is called, it is called from within projectDirectory, thus the relative path lookup of firstGraphicOfFirstChapter.jpeg fails. Instead the command\\
+% \cmd{\includegraphics\{firstChapter/firstGraphicOfFirstChapter.jpeg\}}\\
+% can be used (example for a Unix system), but this is tedious and counter-intuitive.
+%
+% If both tikzscale and currfile are loaded, the limitation is fixed, so that both \cmd{\includegraphics} commands succeed. Note, that this functionality supports the traditional graphic formats, too, and is also available without loading the TikZ or PGFPlots packages, although the package's name might imply otherwise.
+%
+% \section{Compatibility}
+% There is no incompatibilty to other packages known, yet.
+%
+% \subsection{Load Order}
+% There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
 %
 % \subsection{Externalization library}
+% TikZ externalization library is supported.
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item Idea
+%	\item Output warning if the precision of the scaling could not be reached.
+%	\item the package can test if a pgfplot is used (needed due to keepAspectRatio in pgfplots) by changing the width and or height and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
+%	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
 %
 % \section{Contributions}
 % \begin{itemize}
-%     \item Any Name
+%     \item Jake
 %         \begin{itemize}
-%             \item did something
+%             \item Encouraged to create this package.
+%         \end{itemize}
+%     \item Dr.\ Christian Feuersänger
+%         \begin{itemize}
+%             \item Encouraged to create this package and created PGFPlots.
 %         \end{itemize}
 % \end{itemize}
 %
 %
 % \section{Implementation}
-% The basic idea is to first get the correct file name (i.e. find the path and the file extension), then determine the graphic type (i.e. TikZ or something else) and call either the original includegraphics command or the tikzscale command.
+% The basic idea is to first get the correct file name (i.e. find the path and the file extension), then determine the graphic type (i.e. TikZ or something else) and call either the original includegraphics command or the tikzscale command. Tikzpictures are then plotted into an invisible box and their size is measured. If their measured size differs from the requested size, they are replotted with corrected parameters to get the requested size. The correctly sized plots are then really plotted.
 %
 % \iffalse
 %<*package>
@@ -206,7 +364,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-% This command draws the plot's border at the right text border, so that thick points or label descriptions can reach into the margin. This should be limited to pgfplots only if activated.
+% This command draws the plot's border at the right text border, so that thick points or label descriptions can reach into the margin. This should be limited to PGFPlots only if activated.
 %^^A \tikzset{every picture/.style={trim axis right}}
 %
 % With the option below, the labels can be moved a bit to the left so that they reach to the text margin.
@@ -225,8 +383,7 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\edocsvlist}
 % This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\docsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
 %    \begin{macrocode}
-% \def\edocsvlist#1{%
-\NewDocumentCommand{\edocsvlist}{m}{%
+\def\edocsvlist#1{%
 	\edef\tikzscale@edocsvlist{#1}%
 	\expandafter\docsvlist\expandafter{\tikzscale@edocsvlist}%
 }
@@ -236,8 +393,7 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\eforcsvlist}
 % These is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forcsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
 %    \begin{macrocode}
-% \def\eforcsvlist#1#2{%
-\NewDocumentCommand{\eforcsvlist}{mm}{%
+\def\eforcsvlist#1#2{%
 	\edef\tikzscale@eforcsvlist{#2}%
 	\expandafter\forcsvlist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@eforcsvlist}%
 }
@@ -350,7 +506,7 @@ and the derived files           tikzscale.ins,
 % \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % write
 % \cmd{\tikzscale@includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
-% If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for pgfplots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
+% If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{>{\SplitList,}om}{%
 %    \end{macrocode}
@@ -431,7 +587,7 @@ and the derived files           tikzscale.ins,
 		}%
 	}%
 %    \end{macrocode}
-	% The plot currently only has approximately the given width currently, due to a (known) bug in pgfplots. Thus, do a final scaling to correct the difference.
+	% The plot currently only has approximately the given width currently, due to a (known) bug in PGFPlots. Thus, do a final scaling to correct the difference.
 %    \begin{macrocode}
 	\tikzscale@resizeTo{#5}%
 }
