@@ -307,7 +307,8 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item Improve scaling iteratively until it is good enough.
+%	\item Improve scaling iteratively until it is good enough if only either width or height has been given.
+%	\item At least give a clear error message for unscalable plots.
 %	\item the package can test if a pgfplot is used (needed due to keepAspectRatio in pgfplots) by changing the width and or height and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
@@ -316,11 +317,11 @@ and the derived files           tikzscale.ins,
 % \begin{itemize}
 %     \item Jake
 %         \begin{itemize}
-%             \item Encouraged to create this package.
+%             \item Encouraged the author to create this package.
 %         \end{itemize}
 %     \item Dr.\ Christian Feuersänger
 %         \begin{itemize}
-%             \item Encouraged to create this package and created PGFPlots.
+%             \item Encouraged the author to create this package and created PGFPlots.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -353,8 +354,13 @@ and the derived files           tikzscale.ins,
 	\@ifpackageloaded{tikz}{%
 		\gdef\tikzscale@scale{1}%
 		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
+%    \end{macrocode}
+		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus 0.001 pt cannot always be achieved independent of the number of iterations.
+%    \begin{macrocode}
 		\newlength{\tikzscale@accuracy}%
-		\setlength{\tikzscale@accuracy}{0.001pt}%
+		\setlength{\tikzscale@accuracy}{0.01pt}%
+		%
+		\def\maxTestIterations{10}%
 	}{}%
 	%
 	\@ifpackageloaded{pgfplots}{%
@@ -580,16 +586,18 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzTwoArguments}{mmmmm}{%
 	\ifboolexpr{test {\ifstrequal{#1}{width}} and test {\ifstrequal{#3}{height}}}{%
-		\pgfmathsetmacro{\tikzscale@width}{#2}%
-		\pgfmathsetmacro{\tikzscale@height}{#4}%
+		\pgfmathsetmacro{\requestedWidth}{#2}%
+		\pgfmathsetmacro{\requestedHeight}{#4}%
 	}{%
 		\ifboolexpr{test {\ifstrequal{#1}{height}} and test {\ifstrequal{#3}{width}}}{%
-			\pgfmathsetmacro{\tikzscale@width}{#4}%
-			\pgfmathsetmacro{\tikzscale@height}{#2}%
+			\pgfmathsetmacro{\requestedWidth}{#4}%
+			\pgfmathsetmacro{\requestedHeight}{#2}%
 		}{%
 			\tikzscale@invalidKeyError{#1 or #3}%
 		}%
 	}%
+	\def\tikzscale@width{\requestedWidth}%
+	\def\tikzscale@height{\requestedHeight}%
 %    \end{macrocode}
 	% The plot currently only has approximately the given width currently, due to a (known) bug in PGFPlots. Thus, do a final scaling to correct the difference.
 %    \begin{macrocode}
@@ -670,22 +678,43 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\tikzscale@conditionalDisableExternalization
 %    \end{macrocode}
-	% Saving the box saves creating the content twice to measure width and height separately.
+	% Improve the scaling until it is good enough.
 %    \begin{macrocode}
-	\sbox{\tikzscale@measuredSize}{\input{#1}}%
+	\foreach \l in {1,...,\maxTestIterations}{%
 %    \end{macrocode}
-	% Determine the sum of the wanted dimension and the delta (= difference between wanted dimension and measured dimension).
+		% Using the box allows measuring the width and height with one rendering run.
 %    \begin{macrocode}
-	\pgfmathsetmacro{\tikzscale@width}{2*\tikzscale@width-\wd\tikzscale@measuredSize}%
-	\pgfmathsetmacro{\tikzscale@height}{2*\tikzscale@height-\ht\tikzscale@measuredSize}%
+		\sbox{\tikzscale@measuredSize}{\input{#1}}%
 %    \end{macrocode}
-	% Really plot the graphic with the final size.
+		% Determine the remaining error. and check if it is larger than a threshold.
+%    \begin{macrocode}
+		\pgfmathsetmacro{\widthDifference}{\wd\tikzscale@measuredSize - \requestedWidth}%
+		\pgfmathsetmacro{\heightDifference}{\ht\tikzscale@measuredSize - \requestedHeight}%
+	%    \end{macrocode}
+		% Output error in current iterion for debugging.
+%    \begin{macrocode}
+% 		widthDifference: \widthDifference, heightDifference: \heightDifference\\% Debugging
+%    \end{macrocode}
+		% Check if the remaining error is larger than a threshold.
+%    \begin{macrocode}
+		\ifboolexpr{test {\tikzscale@ifSizeDifference{\widthDifference}} or test {\tikzscale@ifSizeDifference{\heightDifference}}}{%
+%    \end{macrocode}
+			% Correct the dimension by the error.
+%    \begin{macrocode}
+			\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \widthDifference}%
+			\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \heightDifference}%
+		}{%
+			\breakforeach%
+		}%
+	}%
+%    \end{macrocode}
+	% Really plot the graphic with the final size and with externalization enabled.
 %    \begin{macrocode}
 	\tikzscale@conditionalEnableExternalization{#1}
 	\sbox{\tikzscale@measuredSize}{\input{#1}}%
 	\usebox{\tikzscale@measuredSize}%
-	\tikzscale@warnIfSizeDifference{\tikzscale@width}{\wd\tikzscale@measuredSize}{#1's width}%
-	\tikzscale@warnIfSizeDifference{\tikzscale@height}{\ht\tikzscale@measuredSize}{#1's height}%
+	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{#1's width}%
+	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{#1's height}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -703,12 +732,26 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\tikzscale@ifSizeDifference}
+% \cmd{\tikzscale@ifSizeDifference}{size}{executed if true}{executed if false}
+%    \begin{macrocode}
+\def\tikzscale@ifSizeDifference#1#2#3{%
+	\pgfmathparse{abs(#1)}%
+	\ifdimgreater{\pgfmathresult pt}{\tikzscale@accuracy}{%
+		#2%
+	}{%
+		#3%
+	}%
+}%
+%    \end{macrocode}
+%\end{macro}
+
+
 %\begin{macro}{\tikzscale@measuredSize}
 % \cmd{\tikzscale@warnIfSizeDifference}{firstSize}{secondSize}{file name}
 %    \begin{macrocode}
 \def\tikzscale@warnIfSizeDifference#1#2#3{%
-	\pgfmathparse{abs(#1 - #2)}%
-	\ifdimgreater{\pgfmathresult pt}{\tikzscale@accuracy}{%
+	\tikzscale@ifSizeDifference{#1-#2}{%
 		\PackageWarning{tikzscale}{Scaling of #3 was only\MessageBreak accurate to \pgfmathresult pt}%
 	}{}%
 }
