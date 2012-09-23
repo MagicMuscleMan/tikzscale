@@ -405,13 +405,13 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \AtEndPreamble{%
 %    \end{macrocode}
-	% Add the TikZ file extensions to the \href{graphicx file extensions}{http://tex.stackexchange.com/a/45502}.
+	% Add the TikZ file extensions to the \href{http://tex.stackexchange.com/a/45502}{graphicx file extensions}.
 %    \begin{macrocode}
 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF}%
 % 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF,.tex,.TEX}%
 	\DeclareGraphicsExtensions{\tikzscale@tikzFileExtensions,\Gin@extensions}%
 %    \end{macrocode}
-	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{current content}{http://tex.stackexchange.com/a/58404}.
+	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
 %    \begin{macrocode}
 	\ifdef{\currfiledir}{%
 % 		\graphicspath{{\currfiledir}{}\Ginput@path}%
@@ -420,7 +420,7 @@ and the derived files           tikzscale.ins,
 		\def\tikzscale@graphicspath{{}}%
 	}%
 %    \end{macrocode}
-%     \item Save the \cmd{\includegraphics} (\href{command}{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}), to have a consistent user interface.
+%     \item Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command}, to have a consistent user interface.
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
 	\RenewDocumentCommand{\includegraphics}{om}{%
@@ -465,7 +465,7 @@ and the derived files           tikzscale.ins,
 			}{}%
 		}%
 %    \end{macrocode}
-	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{current content}{http://tex.stackexchange.com/a/45502} set by \cmd{\DeclareGraphicsExtensions}.
+	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{http://tex.stackexchange.com/a/45502}{current content} set by \cmd{\DeclareGraphicsExtensions}.
 %    \begin{macrocode}
 		\eforcsvlist{\tikzscale@checkExtension}{{},\Gin@extensions}%
 	}%
