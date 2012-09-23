@@ -307,7 +307,7 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item Output warning if the precision of the scaling could not be reached.
+%	\item Improve scaling iteratively until it is good enough.
 %	\item the package can test if a pgfplot is used (needed due to keepAspectRatio in pgfplots) by changing the width and or height and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
@@ -353,6 +353,8 @@ and the derived files           tikzscale.ins,
 	\@ifpackageloaded{tikz}{%
 		\gdef\tikzscale@scale{1}%
 		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
+		\newlength{\tikzscale@accuracy}%
+		\setlength{\tikzscale@accuracy}{0.001pt}%
 	}{}%
 	%
 	\@ifpackageloaded{pgfplots}{%
@@ -620,7 +622,7 @@ and the derived files           tikzscale.ins,
 	% Externalize the graphic with the final size.
 %    \begin{macrocode}
 	\tikzscale@conditionalEnableExternalization{#3}
-	\ifdimless{\pgfmathresult pt}{0.1pt}{%
+	\ifdimless{\pgfmathresult pt}{\tikzscale@accuracy}{%
 %    \end{macrocode}
 	% Reusing the box' content, instead of redrawing the graphic, were probably faster, but it would bypass an externalization.
 %    \begin{macrocode}
@@ -649,9 +651,11 @@ and the derived files           tikzscale.ins,
 	%^^A 		\sbox{\tikzscale@measuredSize}{\BODY}%
 	%^^A 		\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale*\tikzsize/#1\tikzscale@measuredSize}%
 	%^^A 	}%
-		% Finally, include the picture.
+		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
 %    \begin{macrocode}
-		#2%
+		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
+		\usebox{\tikzscale@measuredSize}%
+		\tikzscale@warnIfSizeDifference{\measuredFinal}{\tikzsize}{#3}%
 	}%
 }
 %    \end{macrocode}
@@ -678,7 +682,10 @@ and the derived files           tikzscale.ins,
 	% Really plot the graphic with the final size.
 %    \begin{macrocode}
 	\tikzscale@conditionalEnableExternalization{#1}
-	\input{#1}%
+	\sbox{\tikzscale@measuredSize}{\input{#1}}%
+	\usebox{\tikzscale@measuredSize}%
+	\tikzscale@warnIfSizeDifference{\tikzscale@width}{\wd\tikzscale@measuredSize}{#1's width}%
+	\tikzscale@warnIfSizeDifference{\tikzscale@height}{\ht\tikzscale@measuredSize}{#1's height}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -692,6 +699,18 @@ and the derived files           tikzscale.ins,
 \def\tikzscale@measureSize#1#2#3{%
 	\sbox{\tikzscale@measuredSize}{#3}%
 	\pgfmathsetmacro{#1}{#2\tikzscale@measuredSize}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@measuredSize}
+% \cmd{\tikzscale@warnIfSizeDifference}{firstSize}{secondSize}{file name}
+%    \begin{macrocode}
+\def\tikzscale@warnIfSizeDifference#1#2#3{%
+	\pgfmathparse{abs(#1 - #2)}%
+	\ifdimgreater{\pgfmathresult pt}{\tikzscale@accuracy}{%
+		\PackageWarning{tikzscale}{Scaling of #3 was only\MessageBreak accurate to \pgfmathresult pt}%
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
