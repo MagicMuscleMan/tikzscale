@@ -307,7 +307,6 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item Improve scaling iteratively until it is good enough if only either width or height has been given.
 %	\item At least give a clear error message for unscalable plots.
 %	\item the package can test if a pgfplot is used (needed due to keepAspectRatio in pgfplots) by changing the width and or height and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
@@ -655,10 +654,21 @@ and the derived files           tikzscale.ins,
 		\pgfmathsetmacro{\tikzscale@scale}{(\tikzsize - \fixedSize) / (\measuredFirst - \fixedSize)}%
 %    \end{macrocode}
 		% Additionally or alternatively the brute force approach to iteratively improve the solution can be used.
-	%^^A 	\foreach \l in {1,...,3}{%
-	%^^A 		\sbox{\tikzscale@measuredSize}{\BODY}%
-	%^^A 		\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale*\tikzsize/#1\tikzscale@measuredSize}%
-	%^^A 	}%
+%    \begin{macrocode}
+		\foreach \l in {1,...,\maxTestIterations}{%
+			\tikzscale@measureSize{\measuredIntermediate}{#1}{#2}%
+			%
+			\tikzscale@ifSizeDifference{\measuredIntermediate-\tikzsize}{%
+%    \end{macrocode}
+				% First divide before multiply to avoid overflowing (at 16384).
+%    \begin{macrocode}
+				\pgfmathparsemacro{\errorRatio}{\measuredIntermediate/\tikzsize}%
+				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
+			}{%
+				\breakforeach%
+			}%
+		}%
+%    \end{macrocode}
 		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
