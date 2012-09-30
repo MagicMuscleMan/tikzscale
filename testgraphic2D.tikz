@@ -1,0 +1,8 @@
+\begin{tikzpicture}
+	\begin{axis}[%
+		scale only axis,
+		xmin=-25, xmax=25,
+		ymin=-25, ymax=25]
+		\addplot graphics [xmin=-25, xmax=25, ymin=-25, ymax=25] {example-grid-100x100bp.png};
+	\end{axis}
+\end{tikzpicture}

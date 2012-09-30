@@ -303,12 +303,12 @@ and the derived files           tikzscale.ins,
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
 %
 % \subsection{Externalization library}
-% TikZ externalization library is supported.
+% TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge.
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item At least give a clear error message for unscalable plots.
-%	\item the package can test if a pgfplot is used (needed due to keepAspectRatio in pgfplots) by changing the width and or height and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
+%	\item How to support for imagesc plots something like "scale only axis, width=\cmd{\linewidth}, height=\cmd{\linewidth}" without writing into the margin?
+%	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
 %
@@ -346,26 +346,16 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scale}
-	% Set these as default values to allow a preview of tikzpicture environments in ktikz or the like. Global definitions are necessary, as local definitions result in errors in some situations.
-	%
-	% Use a scale factor for all tikzpicture environments. Set the factor to 1 as default, so if there are no additional scaling demands, just keep the tikzpicture unscaled. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get squared in the inner one: http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file
 %    \begin{macrocode}
 	\@ifpackageloaded{tikz}{%
-		\gdef\tikzscale@scale{1}%
-		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
 %    \end{macrocode}
 		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus 0.001 pt cannot always be achieved independent of the number of iterations.
 %    \begin{macrocode}
 		\newlength{\tikzscale@accuracy}%
 		\setlength{\tikzscale@accuracy}{0.01pt}%
 		%
+		% This is needed in normal TikZ pictures and in PGFPlots, but as the pgfplots package loads the tikz package, it is fine to define it here.
 		\def\maxTestIterations{10}%
-	}{}%
-	%
-	\@ifpackageloaded{pgfplots}{%
-		\gdef\tikzscale@width{\linewidth}%
-		\gdef\tikzscale@height{\linewidth}%
-		\pgfplotsset{every axis/.style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}%
 	}{}%
 }
 %    \end{macrocode}
@@ -408,7 +398,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 
 %
-%\begin{macro}{\includegraphics}
+%\begin{macro}{\activatetikzscale}
 %    \begin{macrocode}
 \AtEndPreamble{%
 %    \end{macrocode}
@@ -427,30 +417,45 @@ and the derived files           tikzscale.ins,
 		\def\tikzscale@graphicspath{{}}%
 	}%
 %    \end{macrocode}
-%     \item Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command}, to have a consistent user interface.
+%     \item Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command} and replace it by a new more generic command, to have a consistent user interface.
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
-	\RenewDocumentCommand{\includegraphics}{om}{%
-%    \end{macrocode}
-		% Find the exact file name, as the ending and the path could be omitted.
-%    \begin{macrocode}
-		\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
-%    \end{macrocode}
-		% Check if the found file is a TikZ file.
-	%    \begin{macrocode}
-		\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}
-		\ifcsdef{tikzscale@testTikzFile}{
-			\def\function{\tikzscale@includetikz}%
-		}{%
-			\def\function{\tikzscale@oldincludegraphics}%
-		}%
-		\IfNoValueTF{#1}{%
-			\function{\tikzscale@fileName}%
-		}{%
-			\function[#1]{\tikzscale@fileName}%
-		}%
-	}%
+	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
 }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\includegraphics}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includegraphics}{om}{%
+%    \end{macrocode}
+	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
+%    \begin{macrocode}
+	\begingroup
+%    \end{macrocode}
+	% Find the exact file name, as the ending and the path could be omitted.
+%    \begin{macrocode}
+	\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
+%    \end{macrocode}
+	% Check if the found file is a TikZ file.
+	%    \begin{macrocode}
+	\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}
+	\ifcsdef{tikzscale@testTikzFile}{
+%    \end{macrocode}
+	% Deactivate the new includegraphics command, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots.
+%    \begin{macrocode}
+		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
+		\def\function{\tikzscale@includetikz}%
+	}{%
+		\def\function{\tikzscale@oldincludegraphics}%
+	}%
+	\IfValueTF{#1}{%
+		\function[#1]{\tikzscale@fileName}%
+	}{%
+		\function{\tikzscale@fileName}%
+	}%
+	\endgroup
+}%
 %    \end{macrocode}
 %\end{macro}
 %
@@ -518,15 +523,10 @@ and the derived files           tikzscale.ins,
 % If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{>{\SplitList,}om}{%
-%    \end{macrocode}
-	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
-%    \begin{macrocode}
 	\IfNoValueTF{#1}{%
 		\input{#2}%
 	}{%
-		\begingroup
 		\tikzscale@includeTikzSplitArguments{#2}#1%
-		\endgroup
 	}
 }
 %    \end{macrocode}
@@ -542,9 +542,14 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@includeTikzSplitArguments}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzSplitArguments}{m>{\SplitList=}m>{\SplitList=}g}{%
+%    \end{macrocode}
+		% Set a scaling factor or a width and height for the plot, which will be loaded. The \cmd{\tikzset} and \cmd{\pgfplotsset} commands have local scope. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get \href{http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file}{squared} in the inner one. Note that if a user-defined style thus is ignored in this special case. The styles are defined here, so that files which are inputted without the \cmd{includegraphics} command are not affected.
+%    \begin{macrocode}
 	\IfNoValueTF{#3}{%
+		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
 		\tikzscale@includeTikzOneArgument#2{#1}%
 	}{%
+		\pgfplotsset{every axis/.append style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}%
 		\tikzscale@includeTikzTwoArguments#2#3{#1}%
 	}%
 }
@@ -556,13 +561,14 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzOneArgument}{mmm}{%
 %    \end{macrocode}
-	% Use \cmd{\pgfmathsetmacro}, to allow calculations in the given argument.
+	% Use \cmd{\pgfmathsetmacro}, to allow calculations in the given argument. Do the calculation after checking the argument to output a useful error message in case the key is wrong.
 %    \begin{macrocode}
-	\pgfmathsetmacro{\tikzsize}{#2}%
 	\ifstrequal{#1}{width}{%
+		\pgfmathsetmacro{\tikzsize}{#2}%
 		\tikzscale@scaleTo{\wd}{\input{#3}}{#3}%
 	}{%
 		\ifstrequal{#1}{height}{%
+			\pgfmathsetmacro{\tikzsize}{#2}%
 			\tikzscale@scaleTo{\ht}{\input{#3}}{#3}%
 		}{%
 			\tikzscale@invalidKeyError{#1}%
@@ -595,6 +601,9 @@ and the derived files           tikzscale.ins,
 			\tikzscale@invalidKeyError{#1 or #3}%
 		}%
 	}%
+%    \end{macrocode}
+	% Try to set initial sizes close to the requested sizes, to improve the optimization's speed.
+%    \begin{macrocode}
 	\def\tikzscale@width{\requestedWidth}%
 	\def\tikzscale@height{\requestedHeight}%
 %    \end{macrocode}
@@ -624,18 +633,14 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% It can happen, that there are no variable areas. Furthermore, the original size could already fit. Avoid numerical problems in both cases by directly drawing the picture. Do not compare the float values directly, as TeX's precision is quite limited.
 %    \begin{macrocode}
-	\pgfmathparse{abs(\measuredSecond - \tikzsize)}%
+	\tikzscale@ifSizeDifference{\measuredSecond - \tikzsize}{%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
+	% If a plot is not scalable (e.g. consisting of a node only), but is not correctly scaled, exit with an error.
 %    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{#3}
-	\ifdimless{\pgfmathresult pt}{\tikzscale@accuracy}{%
-%    \end{macrocode}
-	% Reusing the box' content, instead of redrawing the graphic, were probably faster, but it would bypass an externalization.
-%    \begin{macrocode}
-		% \usebox{\tikzscale@measuredSize}%
-		#2
-	}{%
+		\tikzscale@ifSizeDifference{\measuredFirst - \measuredSecond}{%
+		}{%
+			\PackageError{tikzscale}{Requested to scale unscalable graphic}{Do not set width or height for graphic in\MessageBreak #3}
+		}
 %    \end{macrocode}
 		% We know, that the variable sized area scales with the scaling factor, thus it holds
 		% \cmd{\scale} * \cmd{\variableFirst} = \cmd{\variableSecond},
@@ -657,7 +662,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\foreach \l in {1,...,\maxTestIterations}{%
 			\tikzscale@measureSize{\measuredIntermediate}{#1}{#2}%
-			%
+%    \end{macrocode}
+		% Optimize until the absolute difference is small enough, although the (relative) size ratios are used to calculate a new scaling factor.
+%    \begin{macrocode}
 			\tikzscale@ifSizeDifference{\measuredIntermediate-\tikzsize}{%
 %    \end{macrocode}
 				% First divide before multiply to avoid overflowing (at 16384).
@@ -669,11 +676,25 @@ and the derived files           tikzscale.ins,
 			}%
 		}%
 %    \end{macrocode}
+	% Externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{#3}%TODO: noch verschieben
+%    \end{macrocode}
 		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
 		\usebox{\tikzscale@measuredSize}%
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\tikzsize}{#3}%
+	}{%
+%    \end{macrocode}
+	% Externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{#3}%TODO: noch verschieben
+%    \end{macrocode}
+	% Reusing the box' content, instead of redrawing the graphic, were probably faster, but it would bypass an externalization.
+%    \begin{macrocode}
+		% \usebox{\tikzscale@measuredSize}%
+		#2
 	}%
 }
 %    \end{macrocode}

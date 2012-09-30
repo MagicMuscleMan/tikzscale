@@ -1,0 +1,3 @@
+\begin{tikzpicture}
+	\node[draw] (0,0) {Node};
+\end{tikzpicture}
