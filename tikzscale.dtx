@@ -730,7 +730,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\ifboolexpr{test {\tikzscale@ifSizeDifference{\widthDifference}} or test {\tikzscale@ifSizeDifference{\heightDifference}}}{%
 %    \end{macrocode}
-			% Correct the dimension by the error.
+			% Correct the dimension by the error. Use a global assignment, as each iteration in the loop is put into a separate group.
 %    \begin{macrocode}
 			\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \widthDifference}%
 			\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \heightDifference}%
