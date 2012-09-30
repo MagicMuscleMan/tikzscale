@@ -523,10 +523,10 @@ and the derived files           tikzscale.ins,
 % If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{>{\SplitList,}om}{%
-	\IfNoValueTF{#1}{%
-		\input{#2}%
-	}{%
+	\IfValueTF{#1}{%
 		\tikzscale@includeTikzSplitArguments{#2}#1%
+	}{%
+		\input{#2}%
 	}
 }
 %    \end{macrocode}
@@ -545,12 +545,12 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Set a scaling factor or a width and height for the plot, which will be loaded. The \cmd{\tikzset} and \cmd{\pgfplotsset} commands have local scope. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get \href{http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file}{squared} in the inner one. Note that if a user-defined style thus is ignored in this special case. The styles are defined here, so that files which are inputted without the \cmd{includegraphics} command are not affected.
 %    \begin{macrocode}
-	\IfNoValueTF{#3}{%
-		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
-		\tikzscale@includeTikzOneArgument#2{#1}%
-	}{%
+	\IfValueTF{#3}{%
 		\pgfplotsset{every axis/.append style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}%
 		\tikzscale@includeTikzTwoArguments#2#3{#1}%
+	}{%
+		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
+		\tikzscale@includeTikzOneArgument#2{#1}%
 	}%
 }
 %    \end{macrocode}
