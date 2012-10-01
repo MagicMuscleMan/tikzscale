@@ -124,6 +124,36 @@ and the derived files           tikzscale.ins,
 \newcommand{\rcell}[2][c]{%
 	\begin{tabular}[#1]{@{}r@{}}#2\end{tabular}%
 }
+\def\xcmd#1{%
+	\cmd#1%
+	\futurelet\tmp\arglook%
+}
+\def\arglook{%
+	\let\next\relax
+	\ifx[%
+		\tmp%
+		\let\next\xoarg%
+	\fi
+	\ifx\bgroup%
+		\tmp%
+		\let\next\xmarg%
+	\fi
+	\ifx(%
+		\tmp%
+		\let\next\xparg%
+	\fi
+	\next
+}
+
+\def\xoarg[#1]{%
+	\oarg{#1}\futurelet\tmp\arglook%
+}
+\def\xmarg#1{%
+	\marg{#1}\futurelet\tmp\arglook%
+}
+\def\xparg(#1){%
+	\parg{#1}\futurelet\tmp\arglook%
+}
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
@@ -322,6 +352,10 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Encouraged the author to create this package and created PGFPlots.
 %         \end{itemize}
+%     \item David Carlisle
+%         \begin{itemize}
+%             \item Created the \cmd{\xcmd} macro for this package, which is used in the documentation.
+%         \end{itemize}
 % \end{itemize}
 %
 %
@@ -331,6 +365,7 @@ and the derived files           tikzscale.ins,
 % \iffalse
 %<*package>
 % \fi
+% \makeatletter
 %
 %\begin{macro}{\tikzexternal}
 %    \begin{macrocode}
@@ -557,7 +592,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@includeTikzOneArgument}
-% \cmd{\tikzscale@includeTikzOneArgument}{dimension}{length}{file name}
+% \xcmd\tikzscale@includeTikzOneArgument{dimension}{length}{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzOneArgument}{mmm}{%
 %    \end{macrocode}
@@ -587,7 +622,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@includeTikzTwoArguments}
-% \cmd{\tikzscale@includeTikzOneArgument}{firstDimension}{firstLength}{secondDimension}{secondLength}{file name}
+% \xcmd\tikzscale@includeTikzOneArgument{firstDimension}{firstLength}{secondDimension}{secondLength}{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzTwoArguments}{mmmmm}{%
 	\ifboolexpr{test {\ifstrequal{#1}{width}} and test {\ifstrequal{#3}{height}}}{%
@@ -615,7 +650,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scaleTo}
-% \cmd{\scalteTo}{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}
+% \xcmd\scalteTo{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}
 % The first argument determines if a specific width or a specific height should be achieved by scaling.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@scaleTo}{mmm}{%
@@ -701,7 +736,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@resizeTo}
-%\cmd{\tikzscale@resizeTo}{file name}
+%\xcmd\tikzscale@resizeTo{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizeTo}{m}{%
 %    \end{macrocode}
@@ -754,7 +789,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \newsavebox{\tikzscale@measuredSize}
 %    \end{macrocode}
-% \cmd{\measureSize}{result variable name}{\cmd{\wd} or \cmd{\ht}}{to-be-measured content}
+% \xcmd\measureSize{result variable name}{\cmd{\wd} or \cmd{\ht}}{to-be-measured content}
 %    \begin{macrocode}
 \def\tikzscale@measureSize#1#2#3{%
 	\sbox{\tikzscale@measuredSize}{#3}%
@@ -764,7 +799,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@ifSizeDifference}
-% \cmd{\tikzscale@ifSizeDifference}{size}{executed if true}{executed if false}
+% \xcmd\tikzscale@ifSizeDifference{size}{executed if true}{executed if false}
 %    \begin{macrocode}
 \def\tikzscale@ifSizeDifference#1#2#3{%
 	\pgfmathparse{abs(#1)}%
@@ -779,7 +814,7 @@ and the derived files           tikzscale.ins,
 
 
 %\begin{macro}{\tikzscale@measuredSize}
-% \cmd{\tikzscale@warnIfSizeDifference}{firstSize}{secondSize}{file name}
+% \xcmd\tikzscale@warnIfSizeDifference{firstSize}{secondSize}{file name}
 %    \begin{macrocode}
 \def\tikzscale@warnIfSizeDifference#1#2#3{%
 	\tikzscale@ifSizeDifference{#1-#2}{%
@@ -816,6 +851,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+% \makeatother
 % \iffalse
 %</package>
 % \fi
