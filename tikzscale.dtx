@@ -105,6 +105,7 @@ and the derived files           tikzscale.ins,
 %</package>
 %<*driver>
 \documentclass{ltxdoc}
+% \documentclass{ydoc}
 \usepackage[utf8]{inputenx}
 \usepackage[T1]{fontenc}
 \usepackage{subfig}
@@ -124,6 +125,8 @@ and the derived files           tikzscale.ins,
 \newcommand{\rcell}[2][c]{%
 	\begin{tabular}[#1]{@{}r@{}}#2\end{tabular}%
 }
+% \usepackage{ydoc-desc}
+% \optionaloff % otherwise the optional arguments are displayed lighter as the normal text
 \def\xcmd#1{%
 	\cmd#1%
 	\futurelet\tmp\arglook%
