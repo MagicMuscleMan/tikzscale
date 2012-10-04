@@ -554,6 +554,11 @@ and the derived files           tikzscale.ins,
 
 %
 %\begin{macro}{\tikzscale@includetikz}
+% \xcmd\tikzscale@includetikz{filename}\\
+% \xcmd\tikzscale@includetikz[width=1cm]{filename}\\
+% \xcmd\tikzscale@includetikz[height=1cm]{filename}\\
+% \xcmd\tikzscale@includetikz[height=1cm,width=1cm]{filename}\\
+% \xcmd\tikzscale@includetikz[width=1cm,height=1cm]{filename}\\
 % This command allows the inclusion of a tikz file like a graphics file. Thus instead of writing
 % \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % write
@@ -568,12 +573,6 @@ and the derived files           tikzscale.ins,
 	}
 }
 %    \end{macrocode}
-%^^A Tests:
-%^^A \tikzscale@includetikz{filename}\\
-%^^A \tikzscale@includetikz[width=1cm]{filename}\\
-%^^A \tikzscale@includetikz[height=1cm]{filename}\\
-%^^A \tikzscale@includetikz[height=1cm,width=1cm]{filename}\\
-%^^A \tikzscale@includetikz[width=1cm,height=1cm]{filename}
 %\end{macro}
 %
 %
