@@ -182,7 +182,7 @@ and the derived files           tikzscale.ins,
 %
 %\changes{v0.1}{2012/09/10}{First public release}
 % \section{Introduction}
-% When dealing with graphics, there are different scaling demands. For \emph{absolute} scaling,  a width and/or height is given. Opposed to that, for relativ scaling, a horizontal and/or vertical scaling factor is needed. This package only is about absolute scaling. The different absolute scaling demand and their solutions are shown in table \ref{scalingDemands}.
+% When dealing with graphics, there are different scaling demands. For \emph{absolute} scaling, a width and/or height is given. Opposed to that, for relativ scaling, a horizontal and/or vertical scaling factor is needed. This package only is about absolute scaling of tikzpicture environments. The different absolute scaling demands and their solutions are shown in table \ref{scalingDemands}.
 % \begin{table}
 	% \centering
 	% \caption[Graphic scaling methods.]{Absolute graphic scaling methods. If multiple methods are available, the most native one is shown. Methods which \textcolor{orange}{approximate} the scaling are shown in orange text color. \textcolor{blue}{Recommended} methods are shown in blue textcolor.}%^^A Note, that the first three methods in each table are absolute ones, whereas the last three methods are relative ones.}%
@@ -224,9 +224,9 @@ and the derived files           tikzscale.ins,
 			% \toprule
 			% scale & Images & TikZ & PGFPlots\\
 			% \midrule
-			% \rcell{to width\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \textcolor{orange}{\texttt{[width=\emph{unit}]}}\\[0.8em]
+			% \rcell{to width\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},axisratio=1]}}}\\[0.8em]
 			% \rcell{to width\\keeping height} & -- & -- & --\\[0.8em]
-			% \rcell{to height\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \textcolor{orange}{\texttt{[height=\emph{unit}]}}\\[0.8em]
+			% \rcell{to height\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit},axisratio=1]}}}\\[0.8em]
 			% \rcell{to height\\keeping width} & -- & -- & --\\[0.8em]
 			% \rcell{to width\\and height} & -- & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},height=\emph{unit}]}}}\\
 			%^^A horizontally & -- & \texttt{[xscale=\emph{factor}]} & --\\
@@ -237,11 +237,11 @@ and the derived files           tikzscale.ins,
 	% }
 % \end{table}
 %
-% The tikzscale package adds and improves certain forms of absolute scaling for TikZ and PGFPlots, respectively. These scaling methods are the ones which are most useful, maybe even the only ones which are needed. During the scaling, the text sizes and line widths are left unscaled, which avoids inconsistency and visual distraction. PGFPlots itself can scale absolutely, but an approximation is used to achieve that. The tikzscale package uses more exact algorithms.
+% The tikzscale package adds and improves certain forms of absolute scaling for TikZ and PGFPlots, respectively. These scaling methods are the ones which are most useful, maybe even the only ones which are needed. During the scaling, the text sizes and line widths are left unscaled, which avoids inconsistency and visual distraction. PGFPlots itself can scale absolutely, but an approximation is used to achieve that. The tikzscale package uses optimization algorithms and warns if the scaling is not exact.
 %
 % Using tikzscale all relevant scaling methods share the same user interface with the well known \cmd{\includegraphics} command, enabling some of its features like automatic file extension detection for TikZ and PGFPlots, too. Furthermore, the \cmd{\includegraphics} is improved to look-up relative paths in the correct subdirectory, if a \LaTeX\ project is organized in subdirectories.
 %
-% Relative scaling methods are mostly useless, as the sizes of the used images are often arbitrary, either determined by some resolution for rastered images or some arbitrary unit vector sized for vector images, TikZ  and PGFPlots. For traditional images and TikZ pictures, only proportional scaling methods giving either a width or a height make sense, as otherwise they get heavily distorted if the original aspect ratio is changed. As PGFPlots can handle different aspect ratios and aspect ratios are normally not predefined for plots, its requirement is the opposite: A width and a height are needed to avoid getting arbitrary sizes. These requirements lead to the marked blue colors in table \ref{scalingDemands}.
+% Relative scaling methods are mostly useless, as the sizes of the used images are often arbitrary, either determined by some resolution for rastered images or some arbitrary unit vector size for vector images, TikZ  and PGFPlots. For traditional images and TikZ pictures, only proportional scaling methods giving either a width or a height make sense, as otherwise they get heavily distorted if the original aspect ratio is changed. As PGFPlots can handle different aspect ratios and aspect ratios are normally not predefined for plots, its requirement is the opposite: A width and a height are needed to avoid getting arbitrary sizes. For some special plots, the axis ratio can be given, as well. These requirements lead to the marked blue colors in table \ref{scalingDemands}.
 %
 % \section{Usage and Examples}
 % Loading the tikzscale package without loading other packages, does not do anything useful.
@@ -280,6 +280,7 @@ and the derived files           tikzscale.ins,
 % to see tikzscale's benefit.
 %
 % \subsection{PGFPlots}
+% \subsubsection{Scaling of width and height}
 % If the pgfplots package is loaded together with the tikzscale package, the user interface is the same. Instead of giving either a width or a height, both have to be given for pgfplots. So
 %
 % \vspace{0.5em}
@@ -299,6 +300,9 @@ and the derived files           tikzscale.ins,
 % \vspace{0.5em}
 %
 % The benefit is a more accurate scaling algorithm, as the scaling with PGFPlots can be quite coarse. Another win is the unified interface, which simplifies the sharing of plots between projects enormously, as one file and thus one plot can be included in different projects with different sizes.
+%
+% \subsubsection{Scaling using axis ratio}
+% Sometimes, the x-axis and the y-axis should have a specific ratio, e.g. being equal. This is normally achieved by using PGFPlots' option \texttt{scale only axis}, as normal scaling scales the plot including the axis description. Unfortunately, if this option would be used, a plot might be unsharable between two projects, if they have different requirements for the axis ratio. Thus, this option should not be used. Instead, in \cmd{\includegraphics} there is a new option \texttt{axisratio} which must be used together with either width or height. It scales the whole plot including the axis description to the given width or height while keeping the graphical part at a given axis ratio, where the ratio is defined by width divided by height.
 %
 % \subsection{Hints for TikZ and PGFPlots}
 % The whole tikzpicture environment must be in a separate file. This allows sharing of graphics between different \TeX\ projects and a unified user interface via \cmd{\includegraphics}. Having tikzpicture environments directly in a .tex-file is not supported, i.e.\ they do not benefit from the tikzscale package. Multiple tikzpicture environments in one .tikz-file are not supported, either. Put things which always belong together in a shared tikzpicture environment and things which might be used separately in the future in separate files for code sharing across projects. The file ending may be ommited in the \cmd{\includegraphics} command, if it is one of .tikz, .TIKZ, .TikZ, .pgf or .PGF. At the moment, use only \emph{either} width \emph{or} height for normal (i.e.\ non-PGFPlots) tikzpicture environments and use width \emph{and} height for tikzpicture environments which contain a PGFPlots' axis environment.
@@ -340,7 +344,8 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item How to support for imagesc plots something like "scale only axis, width=\cmd{\linewidth}, height=\cmd{\linewidth}" without writing into the margin? Use option axesRatio together with either width or height. Internally set "scale only axis" and use "height = width * axesRatio" or "width = height / axesRatio", but check only the given size.
+%	\item make axisratio=1 the default, think about table
+% 	\item The code in \cmd{\tikzscale@includeTikzTwoArguments} could be \href{http://tex.stackexchange.com/a/34318}{simplified}
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
@@ -618,7 +623,7 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@includeTikzOneArgument}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@invalidKeyError}{m}{%
-	\PackageError{tikzscale}{Invalid key for TikZ graphic}{Change key #1 into width or height.}%
+	\PackageError{tikzscale}{Invalid key for TikZ graphic}{Change key #1 into a valid key.}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -627,26 +632,60 @@ and the derived files           tikzscale.ins,
 % \xcmd\tikzscale@includeTikzOneArgument{firstDimension}{firstLength}{secondDimension}{secondLength}{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeTikzTwoArguments}{mmmmm}{%
-	\ifboolexpr{test {\ifstrequal{#1}{width}} and test {\ifstrequal{#3}{height}}}{%
-		\pgfmathsetmacro{\requestedWidth}{#2}%
-		\pgfmathsetmacro{\requestedHeight}{#4}%
-	}{%
-		\ifboolexpr{test {\ifstrequal{#1}{height}} and test {\ifstrequal{#3}{width}}}{%
-			\pgfmathsetmacro{\requestedWidth}{#4}%
-			\pgfmathsetmacro{\requestedHeight}{#2}%
-		}{%
-			\tikzscale@invalidKeyError{#1 or #3}%
-		}%
-	}%
 %    \end{macrocode}
 	% Try to set initial sizes close to the requested sizes, to improve the optimization's speed.
 %    \begin{macrocode}
-	\def\tikzscale@width{\requestedWidth}%
-	\def\tikzscale@height{\requestedHeight}%
+	\ifstrequal{#1}{width}{%
+		\pgfmathsetmacro{\requestedWidth}{#2}%
+	}{%
+		\ifstrequal{#3}{width}{%
+			\pgfmathsetmacro{\requestedWidth}{#4}%
+		}{}%
+	}%
+	\ifdef{\requestedWidth}{%
+		\def\tikzscale@width{\requestedWidth}%
+	}{}%
+	%
+	\ifstrequal{#1}{height}{%
+		\pgfmathsetmacro{\requestedHeight}{#2}%
+	}{%
+		\ifstrequal{#3}{height}{%
+			\pgfmathsetmacro{\requestedHeight}{#4}%
+		}{}%
+	}%
+	\ifdef{\requestedHeight}{%
+		\def\tikzscale@height{\requestedHeight}%
+	}{}%
+	%
+	\ifstrequal{#1}{axisratio}{%
+		\pgfmathsetmacro{\requestedAxisRatio}{#2}%
+	}{%
+		\ifstrequal{#3}{axisratio}{%
+			\pgfmathsetmacro{\requestedAxisRatio}{#4}%
+		}{}%
+	}%
+	%
+	\ifboolexpr{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
 %    \end{macrocode}
-	% The plot currently only has approximately the given width currently, due to a (known) bug in PGFPlots. Thus, do a final scaling to correct the difference.
+		% The plot currently only has approximately the given width currently, due to a (known) bug in PGFPlots. Thus, do a final scaling to correct the difference.
 %    \begin{macrocode}
-	\tikzscale@resizeTo{#5}%
+		\tikzscale@resizeTo{#5}%
+	}{%
+		\pgfplotsset{every axis/.append style={scale only axis,every axis/.style={}}}%
+		\ifboolexpr{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedAxisRatio}}}{%
+			\pgfmathsetmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
+			\let\requestedSize\requestedWidth
+			\tikzscale@resizeWithAxesRatioTo{\wd}{\tikzscale@width}{\input{#5}}{#5}%
+		}{%
+			\ifboolexpr{test {\ifdef{\requestedHeight}} and test {\ifdef{\requestedAxisRatio}}}{%
+				\pgfmathsetmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
+				\let\requestedSize\requestedHeight
+				\tikzscale@resizeWithAxesRatioTo{\ht}{\tikzscale@height}{\input{#5}}{#5}%
+			}{%
+				\tikzscale@invalidKeyError{#1 or #3}%
+			}%
+		}%
+	}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -783,6 +822,54 @@ and the derived files           tikzscale.ins,
 	\usebox{\tikzscale@measuredSize}%
 	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{#1's width}%
 	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{#1's height}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+
+%\begin{macro}{\tikzscale@resizeWithAxesRatioTo}
+% \xcmd\tikzscale@resizeWithAxesRatioTo{\textbackslash wd or \textbackslash ht}{\textbackslash tikzscale@width or \textbackslash tikzscale@height}{to-be-scaled content}{file name}
+% The first argument determines if a specific width or a specific height should be achieved by resizing.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@resizeWithAxesRatioTo}{mmmm}{%
+	\def\dimension{#1}%
+	\def\variable{#2}%
+	\def\content{#3}%
+	\def\fileName{#4}%
+%    \end{macrocode}
+	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
+%    \begin{macrocode}
+	\tikzscale@conditionalDisableExternalization
+%    \end{macrocode}
+	% Improve the solution iteratively.
+%    \begin{macrocode}
+	\foreach \l in {1,...,\maxTestIterations}{%
+		\tikzscale@measureSize{\measuredSize}{\dimension}{\content}%
+%    \end{macrocode}
+		% Optimize if the absolute difference is too large.
+%    \begin{macrocode}
+		\tikzscale@ifSizeDifference{\measuredSize - \requestedSize}{%
+			\ifdefstring{\dimension}{\wd}{%
+				\pgfmathsetglobalmacro{\tikzscale@width}{\requestedSize + \tikzscale@width - \measuredSize}%
+				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
+			}{%
+				\pgfmathsetglobalmacro{\tikzscale@height}{\requestedSize + \tikzscale@height - \measuredSize}%
+				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
+			}%
+		}{%
+			\breakforeach%
+		}%
+	}%
+%    \end{macrocode}
+	% Externalize the graphic with the final size.
+%    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{\fileName}%
+%    \end{macrocode}
+	% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+%    \begin{macrocode}
+	\tikzscale@measureSize{\measuredFinal}{\dimension}{\content}%
+	\usebox{\tikzscale@measuredSize}%
+	\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{\fileName}%
 }
 %    \end{macrocode}
 %\end{macro}
