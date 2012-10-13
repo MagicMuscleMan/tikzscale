@@ -488,14 +488,14 @@ and the derived files           tikzscale.ins,
 	% Deactivate the new includegraphics command, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots.
 %    \begin{macrocode}
 		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
-		\def\function{\tikzscale@includetikz}%
+		\tikzscale@includetikz[#1]{\tikzscale@fileName}%
 	}{%
-		\def\function{\tikzscale@oldincludegraphics}%
-	}%
-	\IfValueTF{#1}{%
-		\function[#1]{\tikzscale@fileName}%
-	}{%
-		\function{\tikzscale@fileName}%
+% 		\def\function{\tikzscale@oldincludegraphics}%
+		\IfValueTF{#1}{%
+			\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
+		}{%
+			\tikzscale@oldincludegraphics{\tikzscale@fileName}%
+		}%
 	}%
 	\endgroup
 }%
