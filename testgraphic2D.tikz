@@ -1,7 +1,7 @@
 \begin{tikzpicture}
 	\begin{axis}[%
 		xmin=-25, xmax=25,
-		ymin=-25, ymax=25]
-		\addplot graphics [xmin=-25, xmax=25, ymin=-25, ymax=25] {example-grid-100x100bp.png};
+		ymin=-2500, ymax=2500]
+		\addplot graphics [xmin=-25, xmax=25, ymin=-2500, ymax=2500] {example-grid-100x100bp.png};
 	\end{axis}
 \end{tikzpicture}

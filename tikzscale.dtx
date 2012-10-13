@@ -113,6 +113,7 @@ and the derived files           tikzscale.ins,
 \usepackage{tabulary}
 \usepackage{tikzscale}
 \usepackage{tikz}
+\usepackage{pgfplots}
 \usepackage{xcolor}
 \usepackage{lmodern}
 \usepackage{amsmath}
@@ -302,10 +303,27 @@ and the derived files           tikzscale.ins,
 % The benefit is a more accurate scaling algorithm, as the scaling with PGFPlots can be quite coarse. Another win is the unified interface, which simplifies the sharing of plots between projects enormously, as one file and thus one plot can be included in different projects with different sizes.
 %
 % \subsubsection{Scaling using axis ratio}
-% Sometimes, the x-axis and the y-axis should have a specific ratio, e.g. being equal. This is normally achieved by using PGFPlots' option \texttt{scale only axis}, as normal scaling scales the plot including the axis description. Unfortunately, if this option would be used, a plot might be unsharable between two projects, if they have different requirements for the axis ratio. Thus, this option should not be used. Instead, in \cmd{\includegraphics} there is a new option \texttt{axisratio} which must be used together with either width or height. It scales the whole plot including the axis description to the given width or height while keeping the graphical part at a given axis ratio, where the ratio is defined by width divided by height.
+% The scaling described in the previous section scales the whole plot including all axis descriptions and legends to the given width and height. It can thus happen, that the plotted figure has a different size ratio than expected, if the x and y descriptions have different sizes as shown in figure \ref{width=height}.
+% \begin{figure}
+% \centering
+% \frame{\hspace{-0.47cm}\includegraphics[width=0.4\linewidth,height=0.4\linewidth]{testgraphic2D.tikz}}\\
+%^^A \includegraphics[width=0.4\linewidth,height=0.4\linewidth]{testgraphic2D.tikz}
+% \caption{Using options \texttt{width=0.4\cmd{\linewidth}} and \texttt{height=0.4\cmd{\linewidth}} results in an overall quadratic graphic with overall width and height set to 40\% of the linewidth.}
+% \label{width=height}
+% \end{figure}
+% Sometimes, the x-axis and the y-axis should have a specific ratio, e.g. being equal, ignoring the axis description and other things. This is normally achieved by using PGFPlots' option \texttt{scale only axis}. Unfortunately, if this option would be used, a plot might be unsharable between two projects, if they have different requirements for the axis ratio. Thus, this option should not be used in this case. Instead, in \cmd{\includegraphics} there is a new option \texttt{axisratio} which must be used together with either width or height. It scales the whole plot including the axis description to the given width or height as in figure \ref{axisratio} while keeping the graphical part at a given axis ratio, where the ratio is defined by width divided by height. The graphical part is thus not quadratic in general.
+% \begin{figure}
+% \centering
+% \frame{\hspace{-0.35cm}\includegraphics[width=0.4\linewidth,axisratio=1]{testgraphic2D.tikz}}\\
+%^^A \includegraphics[width=0.4\linewidth,axisratio=1]{testgraphic2D.tikz}\\
+% \caption{Using options \texttt{width=0.4\cmd{\linewidth}} and \texttt{axisratio=1} results in an quadratic graphic area with overall width set to 40\% of the linewidth. The height follows from these constraints, so that the overall plot is not quadratic in general.}
+% \label{axisratio}
+% \end{figure}
+
+
 %
 % \subsection{Hints for TikZ and PGFPlots}
-% The whole tikzpicture environment must be in a separate file. This allows sharing of graphics between different \TeX\ projects and a unified user interface via \cmd{\includegraphics}. Having tikzpicture environments directly in a .tex-file is not supported, i.e.\ they do not benefit from the tikzscale package. Multiple tikzpicture environments in one .tikz-file are not supported, either. Put things which always belong together in a shared tikzpicture environment and things which might be used separately in the future in separate files for code sharing across projects. The file ending may be ommited in the \cmd{\includegraphics} command, if it is one of .tikz, .TIKZ, .TikZ, .pgf or .PGF. At the moment, use only \emph{either} width \emph{or} height for normal (i.e.\ non-PGFPlots) tikzpicture environments and use width \emph{and} height for tikzpicture environments which contain a PGFPlots' axis environment.
+% The whole tikzpicture environment must be in a separate file. This allows sharing of graphics between different \TeX\ projects and a unified user interface via \cmd{\includegraphics}. Having tikzpicture environments directly in a .tex-file is not supported, i.e.\ they do not benefit from the tikzscale package. Multiple tikzpicture environments in one .tikz-file are not supported, either. Put things which always belong together in a shared tikzpicture environment and things which might be used separately in the future in separate files for code sharing across projects. The file ending may be ommited in the \cmd{\includegraphics} command, if it is one of .tikz, .TIKZ, .TikZ, .pgf or .PGF. At the moment, use only \emph{either} width \emph{or} height for normal (i.e.\ non-PGFPlots) tikzpicture environments and use width \emph{and} height or one of both together with \emph{axisratio} for tikzpicture environments containing a PGFPlots' axis environment.
 %
 % \subsection{currfile}
 % If the tikzpicture package is loaded together with the \href{http://www.ctan.org/pkg/currfile}{currfile} package, another feature is activated. Suppose you have your project organized in the following directory tree with \textcolor{blue}{directories} shown in blue color:
