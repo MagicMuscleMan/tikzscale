@@ -99,6 +99,7 @@ and the derived files           tikzscale.ins,
 \ProvidesPackage{tikzscale}[2012/09/10 v0.1 tikzscale LaTeX package]
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
+\RequirePackage{pgfkeys}
 \RequirePackage{xparse}
 \RequirePackage{letltxmacro}
 \RequirePackage{xstring}
@@ -363,7 +364,6 @@ and the derived files           tikzscale.ins,
 % \section{Further Ideas}
 % \begin{itemize}
 %	\item make axisratio=1 the default, think about table
-% 	\item The code in \cmd{\tikzscale@includeTikzTwoArguments} could be \href{http://tex.stackexchange.com/a/34318}{simplified}
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item test externalization
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
@@ -458,7 +458,40 @@ and the derived files           tikzscale.ins,
 }
 %    \end{macrocode}
 %\end{macro}
-
+%
+% \begin{macro}{\elseif}
+% This macro provides a conditional which supports an if with an arbitrary amount of elseif (none is also ok) and an optional else. With a simplified syntax (remove the tests and the grouping) this would be worth a separate package.
+%    \begin{macrocode}
+\NewDocumentCommand{\elseif}{mm}{%
+	\ifboolexpr{#1}{%
+		#2%
+		\elseif@absorb
+	}{%
+		\elseif@optional
+	}%
+}
+\NewDocumentCommand{\elseif@optional}{gg}{%
+	\IfValueTF{#1}{%
+		\IfValueTF{#2}{%
+			\ifboolexpr{#1}{%
+				#2%
+				\elseif@absorb
+			}{%
+				\elseif@optional%
+			}%
+		}{%
+			#1%
+		}%
+	}{}%
+}
+\NewDocumentCommand{\elseif@absorb}{g}{%
+	\IfValueTF{#1}{%
+		\elseif@absorb
+	}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}
 % This command is from \href{http://tex.stackexchange.com/a/63248/7323}{Bruno Le Floch}.
 %    \begin{macrocode}
@@ -586,7 +619,21 @@ and the derived files           tikzscale.ins,
 }
 %    \end{macrocode}
 %\end{macro}
-
+%
+% \begin{macro}{\pgfkeys}
+% This is \href{http://tex.stackexchange.com/a/34318}{similarly} done.
+%    \begin{macrocode}
+\pgfkeys{
+	/tikzscale/.is family, /tikzscale,
+	width/.code = {\pgfmathsetmacro{\requestedWidth}{#1}},
+	width/.value required,
+	height/.code = {\pgfmathsetmacro{\requestedHeight}{#1}},
+	height/.value required,
+	axisratio/.code = {\pgfmathsetmacro{\requestedAxisRatio}{#1}},
+	axisratio/.value required
+}
+%    \end{macrocode}
+%\end{macro}
 %
 %\begin{macro}{\tikzscale@includetikz}
 % \xcmd\tikzscale@includetikz{filename}\\
@@ -600,57 +647,66 @@ and the derived files           tikzscale.ins,
 % \cmd{\tikzscale@includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includetikz}{>{\SplitList,}om}{%
-	\IfNoValueOrSplitEmptyTF{#1}{%
+\NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
+	\pgfkeys{/tikzscale, #1}%
+	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
+%    \end{macrocode}
+		% If no option is given, directly load the content, as nothing should get scaled.
+%    \begin{macrocode}
 		\input{#2}%
+	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
+%    \end{macrocode}
+		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
+%    \begin{macrocode}
+		\tikzscale@resizePlotTo{#2}%
+	}{test {\ifdef{\requestedAxisRatio}}}{%
+		\tikzscale@includeAxisRatio{#2}%
+	}{test {\ifundef{\requestedAxisRatio}}}{%
+%    \end{macrocode}
+		% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1
+%    \begin{macrocode}
+		\tikzscale@includeNormalTikzpicture{#2}%
 	}{%
-		\tikzscale@includeTikzSplitArguments{#2}#1%
+		% Everything else results in an error.
+		\tikzscale@invalidKeyError{#2}%
 	}%
 }
 %    \end{macrocode}
 %\end{macro}
 %
-%
-%\begin{macro}{\tikzscale@includeTikzSplitArguments}
+%\begin{macro}{\tikzscale@preparePlot}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includeTikzSplitArguments}{m>{\SplitList=}m>{\SplitList=}g}{%
+\NewDocumentCommand{\tikzscale@preparePlot}{}{%
 %    \end{macrocode}
-		% Set a scaling factor or a width and height for the plot, which will be loaded. The \cmd{\tikzset} and \cmd{\pgfplotsset} commands have local scope. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get \href{http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file}{squared} in the inner one. Note that if a user-defined style thus is ignored in this special case. The styles are defined here, so that files which are inputted without the \cmd{includegraphics} command are not affected.
+	% Set a scaling factor or a width and height for the plot, which will be loaded. The \cmd{\tikzset} and \cmd{\pgfplotsset} commands have local scope. The internal redefinition of the style is correct, because if one tikzpicture includes another one, the scaling factor is reset so that it does not get \href{http://tex.stackexchange.com/questions/38605/scaling-a-tikz-figure-from-an-external-file}{squared} in the inner one. Note that if a user-defined style thus is ignored in this special case. The styles are defined here, so that files which are inputted without the \cmd{includegraphics} command are not affected.
 %    \begin{macrocode}
-	\IfValueTF{#3}{%
-		\pgfplotsset{every axis/.append style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}%
-		\tikzscale@includeTikzTwoArguments#2#3{#1}%
+	\pgfplotsset{every axis/.append style={width=\tikzscale@width,height=\tikzscale@height,every axis/.style={}}}%
+}
+\NewDocumentCommand{\tikzscale@prepareTikzpicture}{}{%
+	\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@includeNormalTikzpicture}
+% \xcmd\tikzscale@includeNormalTikzpicture{file name}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includeNormalTikzpicture}{m}{%
+	\tikzscale@prepareTikzpicture
+	\elseif{test {\ifdef{\requestedWidth}} and test {\ifundef{\requestedHeight}}}{%
+		\def\requestedSize{\requestedWidth}%
+		\tikzscale@scaleTikzpictureTo{\wd}{\input{#1}}{#1}%
+	}{test {\ifundef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
+		\def\requestedSize{\requestedHeight}%
+		\tikzscale@scaleTikzpictureTo{\ht}{\input{#1}}{#1}%
 	}{%
-		\tikzset{every picture/.style={scale=\tikzscale@scale,every picture/.style={}}}%
-		\tikzscale@includeTikzOneArgument#2{#1}%
+		\tikzscale@invalidKeyError{#1}%
 	}%
 }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@includeTikzOneArgument}
-% \xcmd\tikzscale@includeTikzOneArgument{dimension}{length}{file name}
-%    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includeTikzOneArgument}{mmm}{%
-%    \end{macrocode}
-	% Use \cmd{\pgfmathsetmacro}, to allow calculations in the given argument. Do the calculation after checking the argument to output a useful error message in case the key is wrong.
-%    \begin{macrocode}
-	\ifstrequal{#1}{width}{%
-		\pgfmathsetmacro{\tikzsize}{#2}%
-		\tikzscale@scaleTo{\wd}{\input{#3}}{#3}%
-	}{%
-		\ifstrequal{#1}{height}{%
-			\pgfmathsetmacro{\tikzsize}{#2}%
-			\tikzscale@scaleTo{\ht}{\input{#3}}{#3}%
-		}{%
-			\tikzscale@invalidKeyError{#1}%
-		}%
-	}%
-}
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\tikzscale@includeTikzOneArgument}
+%\begin{macro}{\tikzscale@includeNormalTikzpicture}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@invalidKeyError}{m}{%
 	\PackageError{tikzscale}{Invalid key for TikZ graphic}{Change key #1 into a valid key.}%
@@ -658,73 +714,35 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@includeTikzTwoArguments}
-% \xcmd\tikzscale@includeTikzOneArgument{firstDimension}{firstLength}{secondDimension}{secondLength}{file name}
+%\begin{macro}{\tikzscale@includeAxisRatio}
+% \xcmd\tikzscale@includeAxisRatio{file name}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includeTikzTwoArguments}{mmmmm}{%
+\NewDocumentCommand{\tikzscale@includeAxisRatio}{m}{%
+	\tikzscale@preparePlot
 %    \end{macrocode}
 	% Try to set initial sizes close to the requested sizes, to improve the optimization's speed.
 %    \begin{macrocode}
-	\ifstrequal{#1}{width}{%
-		\pgfmathsetmacro{\requestedWidth}{#2}%
+	\pgfplotsset{every axis/.append style={scale only axis,every axis/.style={}}}%
+	\elseif{test {\ifdef{\requestedWidth}} and test {\ifundef{\requestedHeight}}}{%
+		\pgfmathsetmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
+		\let\requestedSize\requestedWidth
+		\tikzscale@resizePlotWithAxesRatioTo{\wd}{\tikzscale@width}{\input{#1}}{#1}%
+	}{test {\ifundef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
+		\pgfmathsetmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
+		\let\requestedSize\requestedHeight
+		\tikzscale@resizePlotWithAxesRatioTo{\ht}{\tikzscale@height}{\input{#1}}{#1}%
 	}{%
-		\ifstrequal{#3}{width}{%
-			\pgfmathsetmacro{\requestedWidth}{#4}%
-		}{}%
-	}%
-	\ifdef{\requestedWidth}{%
-		\def\tikzscale@width{\requestedWidth}%
-	}{}%
-	%
-	\ifstrequal{#1}{height}{%
-		\pgfmathsetmacro{\requestedHeight}{#2}%
-	}{%
-		\ifstrequal{#3}{height}{%
-			\pgfmathsetmacro{\requestedHeight}{#4}%
-		}{}%
-	}%
-	\ifdef{\requestedHeight}{%
-		\def\tikzscale@height{\requestedHeight}%
-	}{}%
-	%
-	\ifstrequal{#1}{axisratio}{%
-		\pgfmathsetmacro{\requestedAxisRatio}{#2}%
-	}{%
-		\ifstrequal{#3}{axisratio}{%
-			\pgfmathsetmacro{\requestedAxisRatio}{#4}%
-		}{}%
-	}%
-	%
-	\ifboolexpr{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
-%    \end{macrocode}
-		% The plot currently only has approximately the given width currently, due to a (known) bug in PGFPlots. Thus, do a final scaling to correct the difference.
-%    \begin{macrocode}
-		\tikzscale@resizeTo{#5}%
-	}{%
-		\pgfplotsset{every axis/.append style={scale only axis,every axis/.style={}}}%
-		\ifboolexpr{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedAxisRatio}}}{%
-			\pgfmathsetmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
-			\let\requestedSize\requestedWidth
-			\tikzscale@resizeWithAxesRatioTo{\wd}{\tikzscale@width}{\input{#5}}{#5}%
-		}{%
-			\ifboolexpr{test {\ifdef{\requestedHeight}} and test {\ifdef{\requestedAxisRatio}}}{%
-				\pgfmathsetmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
-				\let\requestedSize\requestedHeight
-				\tikzscale@resizeWithAxesRatioTo{\ht}{\tikzscale@height}{\input{#5}}{#5}%
-			}{%
-				\tikzscale@invalidKeyError{#1 or #3}%
-			}%
-		}%
+		\tikzscale@invalidKeyError{#1}%
 	}%
 }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@scaleTo}
+%\begin{macro}{\tikzscale@scaleTikzpictureTo}
 % \xcmd\scalteTo{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}
 % The first argument determines if a specific width or a specific height should be achieved by scaling.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@scaleTo}{mmm}{%
+\NewDocumentCommand{\tikzscale@scaleTikzpictureTo}{mmm}{%
 %    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
@@ -734,12 +752,12 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\def\tikzscale@scale{1}%
 	\tikzscale@measureSize{\measuredFirst}{#1}{#2}%
-	\pgfmathsetmacro{\tikzscale@scale}{\tikzsize/\measuredFirst}%
+	\pgfmathsetmacro{\tikzscale@scale}{\requestedSize/\measuredFirst}%
 	\tikzscale@measureSize{\measuredSecond}{#1}{#2}%
 %    \end{macrocode}
 	% It can happen, that there are no variable areas. Furthermore, the original size could already fit. Avoid numerical problems in both cases by directly drawing the picture. Do not compare the float values directly, as TeX's precision is quite limited.
 %    \begin{macrocode}
-	\tikzscale@ifSizeDifference{\measuredSecond - \tikzsize}{%
+	\tikzscale@ifSizeDifference{\measuredSecond - \requestedSize}{%
 %    \end{macrocode}
 	% If a plot is not scalable (e.g. consisting of a node only), but is not correctly scaled, exit with an error.
 %    \begin{macrocode}
@@ -758,11 +776,11 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Now, to get the correct scaling factor, only take the variable areas into account, as it holds
 		% \cmd{\scaleFinal} = \cmd{\variableSizeFinal} / \cmd{\variableSizeOriginal}
-		% with \cmd{\variableSizeFinal} = \cmd{\tikzsize} - \cmd{\fixedSize}
+		% with \cmd{\variableSizeFinal} = \cmd{\requestedSize} - \cmd{\fixedSize}
 		% and \cmd{\variableSizeOriginal} = \cmd{\measuredFirst} - \cmd{\fixedSize},
 		% which results in
 %    \begin{macrocode}
-		\pgfmathsetmacro{\tikzscale@scale}{(\tikzsize - \fixedSize) / (\measuredFirst - \fixedSize)}%
+		\pgfmathsetmacro{\tikzscale@scale}{(\requestedSize - \fixedSize) / (\measuredFirst - \fixedSize)}%
 %    \end{macrocode}
 		% Additionally or alternatively the brute force approach to iteratively improve the solution can be used.
 %    \begin{macrocode}
@@ -771,11 +789,11 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Optimize until the absolute difference is small enough, although the (relative) size ratios are used to calculate a new scaling factor.
 %    \begin{macrocode}
-			\tikzscale@ifSizeDifference{\measuredIntermediate-\tikzsize}{%
+			\tikzscale@ifSizeDifference{\measuredIntermediate-\requestedSize}{%
 %    \end{macrocode}
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
-				\pgfmathparsemacro{\errorRatio}{\measuredIntermediate/\tikzsize}%
+				\pgfmathparsemacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
 				\breakforeach%
@@ -790,7 +808,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
 		\usebox{\tikzscale@measuredSize}%
-		\tikzscale@warnIfSizeDifference{\measuredFinal}{\tikzsize}{#3}%
+		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
 	}{%
 %    \end{macrocode}
 	% Externalize the graphic with the final size.
@@ -806,10 +824,13 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@resizeTo}
-%\xcmd\tikzscale@resizeTo{file name}
+%\begin{macro}{\tikzscale@resizePlotTo}
+%\xcmd\tikzscale@resizePlotTo{file name}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@resizeTo}{m}{%
+\NewDocumentCommand{\tikzscale@resizePlotTo}{m}{%
+	\tikzscale@preparePlot
+	\def\tikzscale@width{\requestedWidth}%
+	\def\tikzscale@height{\requestedHeight}%
 %    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
@@ -857,11 +878,11 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 
-%\begin{macro}{\tikzscale@resizeWithAxesRatioTo}
-% \xcmd\tikzscale@resizeWithAxesRatioTo{\textbackslash wd or \textbackslash ht}{\textbackslash tikzscale@width or \textbackslash tikzscale@height}{to-be-scaled content}{file name}
+%\begin{macro}{\tikzscale@resizePlotWithAxesRatioTo}
+% \xcmd\tikzscale@resizePlotWithAxesRatioTo{\textbackslash wd or \textbackslash ht}{\textbackslash tikzscale@width or \textbackslash tikzscale@height}{to-be-scaled content}{file name}
 % The first argument determines if a specific width or a specific height should be achieved by resizing.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@resizeWithAxesRatioTo}{mmmm}{%
+\NewDocumentCommand{\tikzscale@resizePlotWithAxesRatioTo}{mmmm}{%
 	\def\dimension{#1}%
 	\def\variable{#2}%
 	\def\content{#3}%
