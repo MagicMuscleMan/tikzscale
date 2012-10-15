@@ -828,6 +828,8 @@ and the derived files           tikzscale.ins,
 %\xcmd\tikzscale@resizePlotTo{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizePlotTo}{m}{%
+	\def\fileName{#1}%
+	\def\content{\input{#1}}%
 	\tikzscale@preparePlot
 	\def\tikzscale@width{\requestedWidth}%
 	\def\tikzscale@height{\requestedHeight}%
@@ -836,19 +838,19 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\tikzscale@conditionalDisableExternalization
 %    \end{macrocode}
-	% Improve the scaling until it is good enough.
+	% Improve the solution iteratively until it is good enough.
 %    \begin{macrocode}
 	\foreach \l in {1,...,\maxTestIterations}{%
 %    \end{macrocode}
 		% Using the box allows measuring the width and height with one rendering run.
 %    \begin{macrocode}
-		\sbox{\tikzscale@measuredSize}{\input{#1}}%
+		\sbox{\tikzscale@measuredSize}{\content}%
 %    \end{macrocode}
-		% Determine the remaining error. and check if it is larger than a threshold.
+		% Determine the remaining error and check if it is larger than a threshold.
 %    \begin{macrocode}
 		\pgfmathsetmacro{\widthDifference}{\wd\tikzscale@measuredSize - \requestedWidth}%
 		\pgfmathsetmacro{\heightDifference}{\ht\tikzscale@measuredSize - \requestedHeight}%
-	%    \end{macrocode}
+%    \end{macrocode}
 		% Output error in current iterion for debugging.
 %    \begin{macrocode}
 % 		widthDifference: \widthDifference, heightDifference: \heightDifference\\% Debugging
@@ -866,13 +868,16 @@ and the derived files           tikzscale.ins,
 		}%
 	}%
 %    \end{macrocode}
-	% Really plot the graphic with the final size and with externalization enabled.
+	% Externalize the graphic with the final size.
 %    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{#1}
-	\sbox{\tikzscale@measuredSize}{\input{#1}}%
+	\tikzscale@conditionalEnableExternalization{\fileName}%
+%    \end{macrocode}
+	% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+%    \begin{macrocode}
+	\sbox{\tikzscale@measuredSize}{\content}%
 	\usebox{\tikzscale@measuredSize}%
-	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{#1's width}%
-	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{#1's height}%
+	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{\fileName's width}%
+	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{\fileName's height}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -892,19 +897,27 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\tikzscale@conditionalDisableExternalization
 %    \end{macrocode}
-	% Improve the solution iteratively.
+	% Improve the solution iteratively until it is good enough.
 %    \begin{macrocode}
 	\foreach \l in {1,...,\maxTestIterations}{%
 		\tikzscale@measureSize{\measuredSize}{\dimension}{\content}%
 %    \end{macrocode}
+		% Determine the remaining error and check if it is larger than a threshold.
+%    \begin{macrocode}
+		\pgfmathsetmacro{\sizeDifference}{\measuredSize - \requestedSize}%
+%    \end{macrocode}
+		% Output error in current iterion for debugging.
+%    \begin{macrocode}
+% 		sizeDifference: \sizeDifference\\% Debugging
+%    \end{macrocode}
 		% Optimize if the absolute difference is too large.
 %    \begin{macrocode}
-		\tikzscale@ifSizeDifference{\measuredSize - \requestedSize}{%
+		\tikzscale@ifSizeDifference{\sizeDifference}{%
 			\ifdefstring{\dimension}{\wd}{%
-				\pgfmathsetglobalmacro{\tikzscale@width}{\requestedSize + \tikzscale@width - \measuredSize}%
+				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \sizeDifference}%
 				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
 			}{%
-				\pgfmathsetglobalmacro{\tikzscale@height}{\requestedSize + \tikzscale@height - \measuredSize}%
+				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \sizeDifference}%
 				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
 			}%
 		}{%
