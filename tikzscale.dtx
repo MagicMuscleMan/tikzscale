@@ -226,9 +226,9 @@ and the derived files           tikzscale.ins,
 			% \toprule
 			% scale & Images & TikZ & PGFPlots\\
 			% \midrule
-			% \rcell{to width\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},axisratio=1]}}}\\[0.8em]
+			% \rcell{to width\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit}]}}}\\[0.8em]
 			% \rcell{to width\\keeping height} & -- & -- & --\\[0.8em]
-			% \rcell{to height\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit},axisratio=1]}}}\\[0.8em]
+			% \rcell{to height\\proportionally} & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}} & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[height=\emph{unit}]}}}\\[0.8em]
 			% \rcell{to height\\keeping width} & -- & -- & --\\[0.8em]
 			% \rcell{to width\\and height} & -- & -- & \textcolor{blue}{\cell{\cmd{\includegraphics}\\\texttt{[width=\emph{unit},height=\emph{unit}]}}}\\
 			%^^A horizontally & -- & \texttt{[xscale=\emph{factor}]} & --\\
@@ -363,9 +363,8 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item make axisratio=1 the default, think about table
-%	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item test externalization
+%	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
 %
@@ -663,9 +662,10 @@ and the derived files           tikzscale.ins,
 		\tikzscale@includeAxisRatio{#2}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
 %    \end{macrocode}
-		% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1
+		% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1. Let's guess that it is a plot with default axisratio. If the guess is wrong, the called function detects that scaling the plot does not work and automatically calls \cmd{\tikzscale@includeNormalTikzpicture}.
 %    \begin{macrocode}
-		\tikzscale@includeNormalTikzpicture{#2}%
+		\def\requestedAxisRatio{1}%
+		\tikzscale@includeAxisRatio{#2}%
 	}{%
 		% Everything else results in an error.
 		\tikzscale@invalidKeyError{#2}%
@@ -724,12 +724,12 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\pgfplotsset{every axis/.append style={scale only axis,every axis/.style={}}}%
 	\elseif{test {\ifdef{\requestedWidth}} and test {\ifundef{\requestedHeight}}}{%
-		\pgfmathsetmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
 		\let\requestedSize\requestedWidth
+		\def\tikzscale@width{\requestedWidth}%
 		\tikzscale@resizePlotWithAxesRatioTo{\wd}{\tikzscale@width}{\input{#1}}{#1}%
 	}{test {\ifundef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
-		\pgfmathsetmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
 		\let\requestedSize\requestedHeight
+		\def\tikzscale@height{\requestedHeight}%
 		\tikzscale@resizePlotWithAxesRatioTo{\ht}{\tikzscale@height}{\input{#1}}{#1}%
 	}{%
 		\tikzscale@invalidKeyError{#1}%
@@ -892,6 +892,7 @@ and the derived files           tikzscale.ins,
 	\def\variable{#2}%
 	\def\content{#3}%
 	\def\fileName{#4}%
+	\gdef\tikzscale@oldSizeDifference{0pt}%
 %    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
@@ -920,20 +921,31 @@ and the derived files           tikzscale.ins,
 				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \sizeDifference}%
 				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
 			}%
+			\tikzscale@ifSizeDifference{\sizeDifference-\tikzscale@oldSizeDifference}{%
+			}{%
+				\tikzscale@includeNormalTikzpicture{#4}%
+				\gdef\tikzscale@alreadyIncluded{true}%
+				\breakforeach%
+			}%
+			\pgfmathsetglobalmacro{\tikzscale@oldSizeDifference}{\sizeDifference}%
 		}{%
-			\breakforeach%
+			\breakforeach
 		}%
 	}%
+	\ifdef{\tikzscale@alreadyIncluded}{%
+		\global\undef\tikzscale@alreadyIncluded
+	}{%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
+		% Externalize the graphic with the final size.
 %    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{\fileName}%
+		\tikzscale@conditionalEnableExternalization{\fileName}%
 %    \end{macrocode}
-	% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
 %    \begin{macrocode}
-	\tikzscale@measureSize{\measuredFinal}{\dimension}{\content}%
-	\usebox{\tikzscale@measuredSize}%
-	\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{\fileName}%
+		\tikzscale@measureSize{\measuredFinal}{\dimension}{\content}%
+		\usebox{\tikzscale@measuredSize}%
+		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{\fileName}%
+	}%
 }
 %    \end{macrocode}
 %\end{macro}
