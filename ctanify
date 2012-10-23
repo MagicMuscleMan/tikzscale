@@ -1,2 +1,2 @@
 #!/bin/sh
-ctanify tikzscale.ins tikzscale.pdf README test-tikzscale.tex test-tikzscale.pdf
+ctanify tikzscale.ins tikzscale.pdf README test-tikzscale.tex test-tikzscale.pdf testRectangle.tikz testgraphic2D.tikz linewidth.tikz pgfplots-test.tikz
