@@ -435,8 +435,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\newlength{\tikzscale@accuracy}%
 		\setlength{\tikzscale@accuracy}{0.01pt}%
-		%
+%    \end{macrocode}
 		% This is needed in normal TikZ pictures and in PGFPlots, but as the pgfplots package loads the tikz package, it is fine to define it here.
+%    \begin{macrocode}
 		\def\maxTestIterations{10}%
 	}{}%
 }
@@ -497,7 +498,7 @@ and the derived files           tikzscale.ins,
 				#2%
 				\elseif@absorb
 			}{%
-				\elseif@optional%
+				\elseif@optional
 			}%
 		}{%
 			#1%
@@ -570,8 +571,8 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Check if the found file is a TikZ file.
 	%    \begin{macrocode}
-	\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}
-	\ifcsdef{tikzscale@testTikzFile}{
+	\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}%
+	\ifcsdef{tikzscale@testTikzFile}{%
 %    \end{macrocode}
 		% Deactivate the new includegraphics command, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots.
 %    \begin{macrocode}
@@ -592,14 +593,15 @@ and the derived files           tikzscale.ins,
 	%    \end{macrocode}
 	% Delete the return variable if it already exists to allow checking if a file has been found.
 	%    \begin{macrocode}
-	\csundef{#1}
+	\csundef{#1}%
 	%    \end{macrocode}
 	% Create a helper function used inside the file ending evaluation.
 	%    \begin{macrocode}
 	\def\tikzscale@checkDirectory##1{%
 		\def\tikzscale@checkExtension####1{%
 			\IfFileExists{##1#2####1}{%
-				\csdef{#1}{##1#2####1}\listbreak%
+				\csdef{#1}{##1#2####1}%
+				\listbreak
 			}{}%
 		}%
 %    \end{macrocode}
@@ -628,7 +630,8 @@ and the derived files           tikzscale.ins,
 	%    \begin{macrocode}
 	\def\do##1{%
 		\IfEndWith{#2}{##1}{%
-			\csdef{#1}{}\listbreak%
+			\csdef{#1}{}%
+			\listbreak
 		}{}%
 	}%
 %    \end{macrocode}
@@ -797,8 +800,8 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\tikzscale@ifSizeDifference{\measuredFirst - \measuredSecond}{%
 		}{%
-			\PackageError{tikzscale}{Requested to scale unscalable graphic}{Do not set width or height for graphic in\MessageBreak #3}
-		}
+			\PackageError{tikzscale}{Requested to scale unscalable graphic}{Do not set width or height for graphic in\MessageBreak #3}%
+		}%
 %    \end{macrocode}
 		% We know, that the variable sized area scales with the scaling factor, thus it holds
 		% \cmd{\scale} * \cmd{\variableFirst} = \cmd{\variableSecond},
@@ -852,7 +855,7 @@ and the derived files           tikzscale.ins,
 	% Reusing the box' content, instead of redrawing the graphic, were probably faster, but it would bypass an externalization.
 %    \begin{macrocode}
 		% \usebox{\tikzscale@measuredSize}%
-		#2
+		#2%
 	}%
 }
 %    \end{macrocode}
@@ -960,7 +963,7 @@ and the derived files           tikzscale.ins,
 			}{%
 				\tikzscale@includeNormalTikzpicture{#4}%
 				\gdef\tikzscale@alreadyIncluded{true}%
-				\breakforeach%
+				\breakforeach
 			}%
 			\pgfmathsetglobalmacro{\tikzscale@oldSizeDifference}{\sizeDifference}%
 		}{%
@@ -968,7 +971,7 @@ and the derived files           tikzscale.ins,
 		}%
 	}%
 	\ifdef{\tikzscale@alreadyIncluded}{%
-		\global\undef\tikzscale@alreadyIncluded
+		\global\undef\tikzscale@alreadyIncluded%
 	}{%
 %    \end{macrocode}
 		% Externalize the graphic with the final size.
