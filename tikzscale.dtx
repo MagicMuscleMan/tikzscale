@@ -362,8 +362,10 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item put files into subdirectory and test creation of externalization files
+%	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
+%	\item if the axis ratio is changed for an already externalized file, this is not detected automatically. This could be done by saving the used axes ratio into the aux file and comparing it when loading the PDF.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
+%	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
 % \end{itemize}
 %
@@ -376,6 +378,7 @@ and the derived files           tikzscale.ins,
 %     \item Dr.\ Christian Feuersänger
 %         \begin{itemize}
 %             \item Encouraged the author to create this package and created PGFPlots.
+%             \item Answered many questions and had a lot of good ideas regarding the externalization.
 %         \end{itemize}
 %     \item David Carlisle
 %         \begin{itemize}
@@ -403,27 +406,6 @@ and the derived files           tikzscale.ins,
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
 	\ProvideDocumentCommand{\tikzifexternalizingnext}{mm}{#1}%
-%    \end{macrocode}
-	% As there does not seem to be a possibility to check whether externalization is enabled or disabled at the moment, add exactly that.
-%    \begin{macrocode}
-% 	\ifdef{\tikzexternaldisable}{%
-% 		\let\tikzscale@tikzexternaldisableOld\tikzexternaldisable
-% 		\def\tikzexternaldisable{%
-% 			\tikzscale@tikzexternaldisableOld
-% 			\undef{\tikzscale@externalizationEnabled}%
-% 		}%
-% 	}{%
-% 		\def\tikzexternaldisable{}%
-% 	}%
-% 	\ifdef{\tikzexternalenable}{%
-% 		\let\tikzscale@tikzexternalenableOld\tikzexternalenable
-% 		\def\tikzexternalenable{%
-% 			\tikzscale@tikzexternalenableOld
-% 			\def\tikzscale@externalizationEnabled{}%
-% 		}%
-% 	}{%
-% 		\def\tikzexternalenable{}%
-% 	}%
 %    \end{macrocode}
 %\end{macro}
 %
@@ -671,10 +653,20 @@ and the derived files           tikzscale.ins,
 % If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
+%    \end{macrocode}
+	% Check the keys here already, as they are needed both to see if already externalized files fullfil their requirements and to handle unexternalized files.
+%    \begin{macrocode}
+	\pgfkeys{/tikzscale, #1}%
 	\tikzifexternalizingnext{%
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
+%    \end{macrocode}
+		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space.
+%    \begin{macrocode}
+		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
+		\endlinechar=-1%
 		\input{#2}%
+		\tikzscale@restoreEndLineChar
 	}%
 }
 %    \end{macrocode}
@@ -683,7 +675,6 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@includetikzUnexternalized}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikzUnexternalized}{O{}m}{%
-	\pgfkeys{/tikzscale, #1}%
 	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
