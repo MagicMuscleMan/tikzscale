@@ -352,7 +352,7 @@ and the derived files           tikzscale.ins,
 % If both tikzscale and currfile are loaded, the limitation is fixed, so that both \cmd{\includegraphics} commands succeed. Note, that this functionality supports the traditional graphic formats, too, and is also available without loading the TikZ or PGFPlots packages, although the package's name might imply otherwise.
 %
 % \section{Compatibility}
-% There is no incompatibilty to other packages known, yet.
+% Using both the externalization library and tikzscale seems to have a race condition when a make file is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs and for $X = 1$ and $X = 2$ no race condition could be observed, yet. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
 %
 % \subsection{Load Order}
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
@@ -362,8 +362,8 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
+%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, for example, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
-%	\item if the axis ratio is changed for an already externalized file, this is not detected automatically. This could be done by saving the used axes ratio into the aux file and comparing it when loading the PDF.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
@@ -398,6 +398,12 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzexternal}
 %    \begin{macrocode}
 \AtEndPreamble{%
+%    \end{macrocode}
+	% Activate the output of the graphics sizes into the dpth files (one file per graphic). This key is used if the externalization library is activated to check if the scaling is correct, otherwise the code is not needed
+%    \begin{macrocode}
+	\ifdef{\tikzifexternalizing}{%
+		\pgfkeys{/pgf/images/external info}%
+	}{}%
 %    \end{macrocode}
 	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
 %    \begin{macrocode}
@@ -650,16 +656,63 @@ and the derived files           tikzscale.ins,
 % \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % write
 % \cmd{\tikzscale@includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
-% If only one of width or height are given, scale proportionally to fullfil the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
+% If only one of width or height are given, scale proportionally to fulfill the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
 %    \end{macrocode}
-	% Check the keys here already, as they are needed both to see if already externalized files fullfil their requirements and to handle unexternalized files.
+	% TODO: Is it really necessary to execute this command here or can it be moved to a more specialized code path?
+%    \begin{macrocode}
+	\ifdef{\tikzexternalgetnextfilename}{%
+		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+	}{}%
+%    \end{macrocode}
+	% Check the keys here already, as they are needed both to see if already externalized files fulfill their requirements and to handle unexternalized files.
 %    \begin{macrocode}
 	\pgfkeys{/tikzscale, #1}%
 	\tikzifexternalizingnext{%
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
+%    \end{macrocode}
+		% Load this thing in an environment, where it does not get printed, as there is some garbage in the file, too. As the sbox creates a new group, use a global variable to get the content out of the group.
+%    \begin{macrocode}
+		\sbox{\tikzscale@measuredSize}{%
+			\IfFileExists{\tikzscale@externalizationName.dpth}{%
+				\input{\tikzscale@externalizationName.dpth}%
+				\xdef\tikzscale@measuredWidth{\pgfexternalwidth}%
+				\xdef\tikzscale@measuredHeight{\pgfexternalheight}%
+			}{}%
+		}%
+%    \end{macrocode}
+		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
+%    \begin{macrocode}
+		\ifdef{\requestedWidth}{%
+			\ifdef{\tikzscale@measuredWidth}{%
+				\tikzscale@ifSizeDifference{\requestedWidth - \tikzscale@measuredWidth}{%
+					\tikzset{external/remake next}%
+				}{}%
+				\global\undef{\tikzscale@measuredWidth}%
+			}{%
+				\tikzset{external/remake next}%
+			}%
+		}{}%
+		\ifdef{\requestedHeight}{%
+			\ifdef{\tikzscale@measuredHeight}{%
+				\tikzscale@ifSizeDifference{\requestedHeight - \tikzscale@measuredHeight}{%
+					\tikzset{external/remake next}%
+				}{}%
+				\global\undef{\tikzscale@measuredHeight}%
+			}{%
+				\tikzset{external/remake next}%
+			}%
+		}{}%
+		\ifdef{\requestedAxisRatio}{%
+			\expandafter\ifcsdef\expandafter{\tikzscale@externalizationName RequestedAxisRatio}{%
+				\edef\oldAxisRatio{\expandafter\csuse\expandafter{\tikzscale@externalizationName RequestedAxisRatio}}%
+				\tikzscale@warnIfSizeDifference{\tikzscale@requestedAxisRatio}{\oldAxisRatio}{#2}%
+			}{%
+				\tikzset{external/remake next}%
+			}%
+		}{}%
 %    \end{macrocode}
 		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space.
 %    \begin{macrocode}
@@ -842,10 +895,6 @@ and the derived files           tikzscale.ins,
 	% Externalize the graphic with the final size.
 %    \begin{macrocode}
 		\tikzscale@conditionalEnableExternalization{#3}%
-%    \end{macrocode}
-	% Reusing the box' content, instead of redrawing the graphic, were probably faster, but it would bypass an externalization.
-%    \begin{macrocode}
-		% \usebox{\tikzscale@measuredSize}%
 		#2%
 	}%
 }
