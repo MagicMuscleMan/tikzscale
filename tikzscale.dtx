@@ -419,7 +419,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\@ifpackageloaded{tikz}{%
 %    \end{macrocode}
-		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus 0.001 pt cannot always be achieved independent of the number of iterations.
+		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus 0.001 pt cannot always be achieved independent of the number of iterations. The current value is chosen arbitrarily, but it might have to be increased in case a plot is found where the given accuracy cannot be achieved.
 %    \begin{macrocode}
 		\newlength{\tikzscale@accuracy}%
 		\setlength{\tikzscale@accuracy}{0.01pt}%
@@ -706,9 +706,11 @@ and the derived files           tikzscale.ins,
 			}%
 		}{}%
 		\ifdef{\requestedAxisRatio}{%
-			\expandafter\ifcsdef\expandafter{\tikzscale@externalizationName RequestedAxisRatio}{%
-				\edef\oldAxisRatio{\expandafter\csuse\expandafter{\tikzscale@externalizationName RequestedAxisRatio}}%
-				\tikzscale@warnIfSizeDifference{\tikzscale@requestedAxisRatio}{\oldAxisRatio}{#2}%
+			\ifdef{\tikzscale@oldAxisRatio}{%
+				\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
+					\tikzset{external/remake next}%
+				}{}%
+				\global\undef{\tikzscale@oldAxisRatio}%
 			}{%
 				\tikzset{external/remake next}%
 			}%
