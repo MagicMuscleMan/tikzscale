@@ -306,7 +306,7 @@ and the derived files           tikzscale.ins,
 % The scaling described in the previous section scales the whole plot including all axis descriptions and legends to the given width and height. It can thus happen, that the plotted figure has a different size ratio than expected, if the x and y descriptions have different sizes as shown in figure \ref{width=height}.
 % \begin{figure}
 % \centering
-% \frame{\hspace{-0.47cm}\includegraphics[width=0.4\linewidth,height=0.4\linewidth]{testgraphic2D.tikz}}\\
+% \frame{\includegraphics[width=0.4\linewidth,height=0.4\linewidth]{testgraphic2D.tikz}}\\
 %^^A \includegraphics[width=0.4\linewidth,height=0.4\linewidth]{testgraphic2D.tikz}
 % \caption{Using options \texttt{width=0.4\cmd{\linewidth}} and \texttt{height=0.4\cmd{\linewidth}} results in an overall quadratic graphic with overall width and height set to 40\% of the linewidth.}
 % \label{width=height}
@@ -314,7 +314,7 @@ and the derived files           tikzscale.ins,
 % Sometimes, the x-axis and the y-axis should have a specific ratio, e.g. being equal, ignoring the axis description and other things. This is normally achieved by using PGFPlots' option \texttt{scale only axis}. Unfortunately, if this option would be used, a plot might be unsharable between two projects, if they have different requirements for the axis ratio. Thus, this option should not be used in this case. Instead, in \cmd{\includegraphics} there is a new option \texttt{axisratio} which must be used together with either width or height. It scales the whole plot including the axis description to the given width or height as in figure \ref{axisratio} while keeping the graphical part at a given axis ratio, where the ratio is defined by width divided by height. The graphical part is thus not quadratic in general.
 % \begin{figure}
 % \centering
-% \frame{\hspace{-0.35cm}\includegraphics[width=0.4\linewidth,axisratio=1]{testgraphic2D.tikz}}\\
+% \frame{\includegraphics[width=0.4\linewidth,axisratio=1]{testgraphic2D.tikz}}\\
 %^^A \includegraphics[width=0.4\linewidth,axisratio=1]{testgraphic2D.tikz}\\
 % \caption{Using options \texttt{width=0.4\cmd{\linewidth}} and \texttt{axisratio=1} results in an quadratic graphic area with overall width set to 40\% of the linewidth. The height follows from these constraints, so that the overall plot is not quadratic in general.}
 % \label{axisratio}
