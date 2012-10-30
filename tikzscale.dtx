@@ -383,6 +383,7 @@ and the derived files           tikzscale.ins,
 %     \item David Carlisle
 %         \begin{itemize}
 %             \item Created the \cmd{\xcmd} macro for this package, which is used in the documentation.
+%             \item Answered many questions and had a lot of good ideas regarding the externalization.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -943,7 +944,7 @@ and the derived files           tikzscale.ins,
 			\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \widthDifference}%
 			\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \heightDifference}%
 		}{%
-			\breakforeach%
+			\breakforeach
 		}%
 	}%
 %    \end{macrocode}
