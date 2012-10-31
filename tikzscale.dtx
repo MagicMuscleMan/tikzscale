@@ -553,6 +553,11 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\begingroup
 %    \end{macrocode}
+	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all.
+%    \begin{macrocode}
+	\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
+	\endlinechar=-1%
+%    \end{macrocode}
 	% Find the exact file name, as the ending and the path could be omitted.
 %    \begin{macrocode}
 	\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
@@ -569,6 +574,7 @@ and the derived files           tikzscale.ins,
 	}{%
 		\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
 	}%
+	\tikzscale@restoreEndLineChar
 	\endgroup
 }%
 %    \end{macrocode}
@@ -715,13 +721,7 @@ and the derived files           tikzscale.ins,
 				\tikzset{external/remake next}%
 			}%
 		}{}%
-%    \end{macrocode}
-		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space.
-%    \begin{macrocode}
-		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
-		\endlinechar=-1%
 		\input{#2}%
-		\tikzscale@restoreEndLineChar
 	}%
 }
 %    \end{macrocode}
