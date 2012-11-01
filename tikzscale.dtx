@@ -683,32 +683,26 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Load this thing in an environment, where it does not get printed, as there is some garbage in the file, too. As the sbox creates a new group, use a global variable to get the content out of the group.
 %    \begin{macrocode}
-		\sbox{\tikzscale@measuredSize}{%
-			\IfFileExists{\tikzscale@externalizationName.dpth}{%
-				\pgfexternalreaddpth{\tikzscale@externalizationName}%
-				\xdef\tikzscale@measuredWidth{\pgfexternalwidth}%
-				\xdef\tikzscale@measuredHeight{\pgfexternalheight}%
-			}{}%
-		}%
+		\IfFileExists{\tikzscale@externalizationName.dpth}{%
+			\pgfexternalreaddpth{\tikzscale@externalizationName}%
+		}{}%
 %    \end{macrocode}
 		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
 %    \begin{macrocode}
 		\ifdef{\requestedWidth}{%
-			\ifdef{\tikzscale@measuredWidth}{%
-				\tikzscale@ifSizeDifference{\requestedWidth - \tikzscale@measuredWidth}{%
+			\ifdef{\pgfexternalwidth}{%
+				\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 					\tikzset{external/remake next}%
 				}{}%
-				\global\undef{\tikzscale@measuredWidth}%
 			}{%
 				\tikzset{external/remake next}%
 			}%
 		}{}%
 		\ifdef{\requestedHeight}{%
-			\ifdef{\tikzscale@measuredHeight}{%
-				\tikzscale@ifSizeDifference{\requestedHeight - \tikzscale@measuredHeight}{%
+			\ifdef{\pgfexternalheight}{%
+				\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 					\tikzset{external/remake next}%
 				}{}%
-				\global\undef{\tikzscale@measuredHeight}%
 			}{%
 				\tikzset{external/remake next}%
 			}%
