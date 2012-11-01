@@ -681,11 +681,9 @@ and the derived files           tikzscale.ins,
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
-		% Load this thing in an environment, where it does not get printed, as there is some garbage in the file, too. As the sbox creates a new group, use a global variable to get the content out of the group.
+		% Load the sizes of the externalized graphic.
 %    \begin{macrocode}
-		\IfFileExists{\tikzscale@externalizationName.dpth}{%
-			\pgfexternalreaddpth{\tikzscale@externalizationName}%
-		}{}%
+		\pgfexternalreaddpth{\tikzscale@externalizationName}%
 %    \end{macrocode}
 		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
 %    \begin{macrocode}
