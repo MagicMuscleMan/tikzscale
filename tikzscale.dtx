@@ -362,7 +362,6 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item If the externalization library is loaded without using it, there should be no errors when compiling test-tikzscale
 %	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, for example, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
@@ -412,6 +411,7 @@ and the derived files           tikzscale.ins,
 	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
+	\ProvideDocumentCommand{\tikzexternalize@hasbeencalled}{}{0}%
 	\ProvideDocumentCommand{\tikzifexternalizingnext}{mm}{#1}%
 %    \end{macrocode}
 %\end{macro}
@@ -558,6 +558,10 @@ and the derived files           tikzscale.ins,
 	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
 %    \begin{macrocode}
 	\begingroup
+	%    \end{macrocode}
+	% It happened at least once together with externalization, that the deactivation of the new includegraphics command did not work, so do it again to be safe (maybe reentrance problem with multiple tikzpicture calls?).
+%    \begin{macrocode}
+	\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}
 %    \end{macrocode}
 	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all.
 %    \begin{macrocode}
@@ -671,7 +675,10 @@ and the derived files           tikzscale.ins,
 	% Check the keys here already, as they are needed both to see if already externalized files fulfill their requirements and to handle unexternalized files.
 %    \begin{macrocode}
 	\pgfkeys{/tikzscale, #1}%
-	\tikzifexternalizingnext{%
+%    \end{macrocode}
+	% If the graphic should be externalized or if externalization has never been requested, process the graphic.
+%    \begin{macrocode}
+	\ifboolexpr{test {\tikzifexternalizingnext} or test {\ifdefstring{\tikzexternalize@hasbeencalled}{0}}}{%
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
