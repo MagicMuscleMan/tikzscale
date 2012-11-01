@@ -540,6 +540,11 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
 	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+%    \end{macrocode}
+	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there.
+%    \begin{macrocode}
+	\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageWarning{tikzscale}{Patching tikzpicture not successful}}%
+	\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageWarning{tikzscale}{Patching endtikzpicture not successful}}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -566,10 +571,6 @@ and the derived files           tikzscale.ins,
 	%    \begin{macrocode}
 	\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}%
 	\ifcsdef{tikzscale@testTikzFile}{%
-%    \end{macrocode}
-		% Deactivate the new includegraphics command, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots.
-%    \begin{macrocode}
-		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 		\tikzscale@includetikz[#1]{\tikzscale@fileName}%
 	}{%
 		\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
