@@ -58,5 +58,9 @@
 			\includegraphics[height=1\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
 		\item Use includegraphics with a scaled two dimensional plot with line width and a default axis ratio\\%
 			\includegraphics[width=\linewidth]{testgraphic2D.tikz}%
+		\item Input a two dimensional plot with a tight frame with width \newlength{\mylen}\settowidth{\mylen}{\frame{\input{testgraphic2D.tikz}}}\the\mylen\\%
+			\frame{\input{testgraphic2D.tikz}}
+		\item Use a two dimensional plot with a tight frame with width \settowidth{\mylen}{\frame{\includegraphics{testgraphic2D.tikz}}}\the\mylen\\%
+			\frame{\includegraphics{testgraphic2D.tikz}}
 	\end{itemize}
 \end{document}

@@ -362,6 +362,7 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
+%	\item If the externalization library is loaded without using it, there should be no errors when compiling test-tikzscale
 %	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, for example, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
