@@ -668,12 +668,6 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
 %    \end{macrocode}
-	% TODO: Is it really necessary to execute this command here or can it be moved to a more specialized code path?
-%    \begin{macrocode}
-	\ifdef{\tikzexternalgetnextfilename}{%
-		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
-	}{}%
-%    \end{macrocode}
 	% Check the keys here already, as they are needed both to see if already externalized files fulfill their requirements and to handle unexternalized files.
 %    \begin{macrocode}
 	\pgfkeys{/tikzscale, #1}%
@@ -681,10 +675,13 @@ and the derived files           tikzscale.ins,
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
-		% Load the sizes of the externalized graphic.
+		% Try to load a dpth file to get the sized of the externalized graphic
 %    \begin{macrocode}
-		\pgfexternalreaddpth{\tikzscale@externalizationName}%
-%    \end{macrocode}
+		\ifboolexpr{test {\ifdef{\tikzexternalgetnextfilename}} and test {\ifdef{\tikzexternal@figurename}}}{%
+			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+			\pgfexternalreaddpth{\tikzscale@externalizationName}%
+		}{}%
+% %    \end{macrocode}
 		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
 %    \begin{macrocode}
 		\ifdef{\requestedWidth}{%
