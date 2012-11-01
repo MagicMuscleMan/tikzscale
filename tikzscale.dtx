@@ -685,7 +685,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\sbox{\tikzscale@measuredSize}{%
 			\IfFileExists{\tikzscale@externalizationName.dpth}{%
-				\input{\tikzscale@externalizationName.dpth}%
+				\pgfexternalreaddpth{\tikzscale@externalizationName}%
 				\xdef\tikzscale@measuredWidth{\pgfexternalwidth}%
 				\xdef\tikzscale@measuredHeight{\pgfexternalheight}%
 			}{}%
