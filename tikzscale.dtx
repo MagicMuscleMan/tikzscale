@@ -1085,7 +1085,6 @@ and the derived files           tikzscale.ins,
 	% For the externalization, set correct file name and only externalize the graphic with the final size. This produces a \href{http://old.nabble.com/minor-comment-about-TikZ-external-library-usage-tt31042245.html#a31042245}{known bug}
 %    \begin{macrocode}
 % 	\tikzsetnextfilename{#1}%
-% 	\edef\myprefix{\pwd}
 %    \end{macrocode}
 	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case. This might be unnecessary due to the newly created path lookup logic.
 %    \begin{macrocode}
