@@ -352,7 +352,7 @@ and the derived files           tikzscale.ins,
 % If both tikzscale and currfile are loaded, the limitation is fixed, so that both \cmd{\includegraphics} commands succeed. Note, that this functionality supports the traditional graphic formats, too, and is also available without loading the TikZ or PGFPlots packages, although the package's name might imply otherwise.
 %
 % \section{Compatibility}
-% Using both the externalization library and tikzscale seems to have a race condition when a make file is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs and for $X = 1$ and $X = 2$ no race condition could be observed, yet. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
+% Using both the externalization library and tikzscale seems to have a race condition when a makefile is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs. For $X = 1$, obviously, no race condition could be observed. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
 %
 % \subsection{Load Order}
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
