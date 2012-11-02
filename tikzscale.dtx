@@ -696,43 +696,45 @@ and the derived files           tikzscale.ins,
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
-		% Try to load a dpth file to get the sized of the externalized graphic
+		% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight of the externalized graphic
 %    \begin{macrocode}
 		\ifboolexpr{test {\ifdef{\tikzexternalgetnextfilename}} and test {\ifdef{\tikzexternal@figurename}}}{%
 			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
 			\pgfexternalreaddpth{\tikzscale@externalizationName}%
-		}{}%
-% %    \end{macrocode}
-		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
+%    \end{macrocode}
+			% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
 %    \begin{macrocode}
-		\ifdef{\requestedWidth}{%
-			\ifdef{\pgfexternalwidth}{%
-				\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
+			\ifdef{\requestedWidth}{%
+				\ifdef{\pgfexternalwidth}{%
+					\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
+						\tikzset{external/remake next}%
+					}{}%
+				}{%
 					\tikzset{external/remake next}%
-				}{}%
-			}{%
-				\tikzset{external/remake next}%
-			}%
-		}{}%
-		\ifdef{\requestedHeight}{%
-			\ifdef{\pgfexternalheight}{%
-				\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
+				}%
+			}{}%
+			\ifdef{\requestedHeight}{%
+				\ifdef{\pgfexternalheight}{%
+					\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
+						\tikzset{external/remake next}%
+					}{}%
+				}{%
 					\tikzset{external/remake next}%
-				}{}%
-			}{%
-				\tikzset{external/remake next}%
-			}%
-		}{}%
-		\ifdef{\requestedAxisRatio}{%
-			\ifdef{\tikzscale@oldAxisRatio}{%
-				\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
+				}%
+			}{}%
+			\ifdef{\requestedAxisRatio}{%
+				\ifdef{\tikzscale@oldAxisRatio}{%
+					\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
+						\tikzset{external/remake next}%
+					}{}%
+					\global\undef{\tikzscale@oldAxisRatio}%
+				}{%
 					\tikzset{external/remake next}%
-				}{}%
-				\global\undef{\tikzscale@oldAxisRatio}%
-			}{%
-				\tikzset{external/remake next}%
-			}%
-		}{}%
+				}%
+			}{}%
+		}{%
+			\tikzset{external/remake next}%
+		}%
 		\input{#2}%
 	}%
 }
