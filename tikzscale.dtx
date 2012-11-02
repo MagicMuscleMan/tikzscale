@@ -362,7 +362,7 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, for example, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated.
+%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated. For performance reasons if a default axis ratio is used, the plot is not regenerated. If a non-default axis ratio has been used for generating the externalized graphic and the default axis ratio is used in the current run, this is not detected and the graphic has the wrong size at the moment. You can, of course, delete the externalized graphic to generate a new one with the correct size.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
@@ -698,7 +698,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight of the externalized graphic
 %    \begin{macrocode}
-		\ifboolexpr{test {\ifdef{\tikzexternalgetnextfilename}} and test {\ifdef{\tikzexternal@figurename}}}{%
+		\ifboolexpr{test {\ifdef{\tikzexternalgetnextfilename}}}{%
 			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
 			\pgfexternalreaddpth{\tikzscale@externalizationName}%
 %    \end{macrocode}
@@ -708,32 +708,39 @@ and the derived files           tikzscale.ins,
 				\ifdef{\pgfexternalwidth}{%
 					\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 						\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
 					}{}%
 				}{%
 					\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
 				}%
 			}{}%
 			\ifdef{\requestedHeight}{%
 				\ifdef{\pgfexternalheight}{%
 					\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 						\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
 					}{}%
 				}{%
 					\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
 				}%
 			}{}%
 			\ifdef{\requestedAxisRatio}{%
 				\ifdef{\tikzscale@oldAxisRatio}{%
 					\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 						\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
 					}{}%
 					\global\undef{\tikzscale@oldAxisRatio}%
 				}{%
 					\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
 				}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
+			\PackageWarning{tikzscale}{Generate \tikzscale@externalizationName \MessageBreak because no file found}%
 		}%
 		\input{#2}%
 	}%
