@@ -767,10 +767,20 @@ and the derived files           tikzscale.ins,
 		\tikzscale@includeAxisRatio{#2}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
 %    \end{macrocode}
-		% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1. Let's guess that it is a plot with default axisratio. If the guess is wrong, the called function detects that scaling the plot does not work and automatically calls \cmd{\tikzscale@includeNormalTikzpicture}.
+		% Use this test as a check if PGFPlots has been loaded.
 %    \begin{macrocode}
-		\def\requestedAxisRatio{1}%
-		\tikzscale@includeAxisRatio{#2}%
+		\ifdef{\pgfplotsset}{%
+%    \end{macrocode}
+			% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1. Let's guess that it is a plot with default axisratio. If the guess is wrong, the called function detects that scaling the plot does not work and automatically calls \cmd{\tikzscale@includeNormalTikzpicture}.
+%    \begin{macrocode}
+			\def\requestedAxisRatio{1}%
+			\tikzscale@includeAxisRatio{#2}%
+		}{%
+%    \end{macrocode}
+			% If PGFPlots has not been loaded, it can only be a TikZPicture.
+%    \begin{macrocode}
+			\tikzscale@includeNormalTikzpicture{#2}
+		}%
 	}{%
 		% Everything else results in an error.
 		\tikzscale@invalidKeyError{#2}%
