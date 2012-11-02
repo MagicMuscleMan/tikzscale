@@ -576,7 +576,7 @@ and the derived files           tikzscale.ins,
 	%    \end{macrocode}
 	% It happened at least once together with externalization, that the deactivation of the new includegraphics command did not work, so do it again to be safe (maybe reentrance problem with multiple tikzpicture calls?).
 %    \begin{macrocode}
-	\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}
+	\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
 	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all.
 %    \begin{macrocode}
@@ -693,7 +693,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Draw and scale the graphic if it can or should not be loaded from the externalized file.
 %    \begin{macrocode}
-	\tikzscale@ifDrawAndScale{
+	\tikzscale@ifDrawAndScale{%
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
