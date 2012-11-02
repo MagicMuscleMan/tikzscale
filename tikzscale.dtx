@@ -378,7 +378,7 @@ and the derived files           tikzscale.ins,
 %     \item Dr.\ Christian Feuersänger
 %         \begin{itemize}
 %             \item Encouraged the author to create this package and created PGFPlots.
-%             \item Answered many questions and had a lot of good ideas regarding the externalization.
+%             \item Answered many questions and had a lot of good ideas regarding the externalization and beyond.
 %         \end{itemize}
 %     \item David Carlisle
 %         \begin{itemize}
@@ -412,8 +412,22 @@ and the derived files           tikzscale.ins,
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalize@hasbeencalled}{}{0}%
-	\ProvideDocumentCommand{\tikzifexternalizingnext}{mm}{#1}%
 %    \end{macrocode}
+	% Define a test to check if the current graphic should be drawn and scaled.
+%    \begin{macrocode}
+	\ifboolexpr{test {\ifundef{\tikzexternalize}} or test {\ifdefstring{\tikzexternalize@hasbeencalled}{0}}}{%
+%    \end{macrocode}
+		% Always draw and scale the graphic if externalization library has not been loaded or not been activated.
+%    \begin{macrocode}
+		\def\tikzscale@ifDrawAndScale#1#2{#1}%
+	}{%
+%    \end{macrocode}
+		% If externalization library has been loaded and activated, draw and scale the graphic if it is to be externalized.
+%    \begin{macrocode}
+		\def\tikzscale@ifDrawAndScale#1#2{%
+			\tikzifexternalizingnext{#1}{#2}%
+		}%
+	}%
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scale}
@@ -676,9 +690,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\pgfkeys{/tikzscale, #1}%
 %    \end{macrocode}
-	% If the graphic should be externalized or if externalization has never been requested, process the graphic.
+	% Draw and scale the graphic if it can or should not be loaded from the externalized file.
 %    \begin{macrocode}
-	\ifboolexpr{test {\tikzifexternalizingnext} or test {\ifdefstring{\tikzexternalize@hasbeencalled}{0}}}{%
+	\tikzscale@ifDrawAndScale{
 		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}{%
 %    \end{macrocode}
