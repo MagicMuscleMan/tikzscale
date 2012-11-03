@@ -389,6 +389,7 @@ and the derived files           tikzscale.ins,
 %     \item Prof. Kai Arzheimer
 %         \begin{itemize}
 %             \item Reported a bug when not using TikZ without PGFPlots, which lead to a fix.
+%             \item Reported a bug that a non-existent macro is used, which lead to a fix.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -913,7 +914,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
-				\pgfmathparsemacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
+				\pgfmathsetmacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
 				\breakforeach%
