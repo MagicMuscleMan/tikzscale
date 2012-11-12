@@ -365,11 +365,13 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated. For performance reasons if a default axis ratio is used, the plot is not regenerated. If a non-default axis ratio has been used for generating the externalized graphic and the default axis ratio is used in the current run, this is not detected and the graphic has the wrong size at the moment. You can, of course, delete the externalized graphic to generate a new one with the correct size.
+%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated. For performance reasons if a default axis ratio is used, the plot is not regenerated. If a non-default axis ratio has been used for generating the externalized graphic and the default axis ratio is used in the current run, this is not detected and the graphic has the wrong size at the moment. You can, of course, delete the externalized graphic to generate a new one with the correct size. This should be avoidable by using pgfexternalstorecommand from pgfcoreexternal.code.tex.
+%	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
 %	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
+%	\item Using something like [x=5pt] as an argument to the axis environment, e.g. to scale the units in bar plots, is problematic, as tikzscale changes the behaviour, i.e. stops the scaling.
 % \end{itemize}
 %
 % \section{Contributions}
