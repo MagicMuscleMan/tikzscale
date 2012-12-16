@@ -444,10 +444,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\@ifpackageloaded{tikz}{%
 %    \end{macrocode}
-		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus 0.001 pt cannot always be achieved independent of the number of iterations. The current value is chosen arbitrarily, but it might have to be increased in case a plot is found where the given accuracy cannot be achieved.
+		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus, e.g. 0.04 pt, cannot always be achieved independent of the number of iterations. Use the \href{http://en.wikibooks.org/wiki/TeX/hfuzz}{value} (0.1 pt in an experiment) which is used for overfull paragraph warnings, too.
 %    \begin{macrocode}
 		\newlength{\tikzscale@accuracy}%
-		\setlength{\tikzscale@accuracy}{0.01pt}%
+		\setlength{\tikzscale@accuracy}{\hfuzz}%
 %    \end{macrocode}
 		% This is needed in normal TikZ pictures and in PGFPlots, but as the pgfplots package loads the tikz package, it is fine to define it here.
 %    \begin{macrocode}
