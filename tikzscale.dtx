@@ -719,6 +719,7 @@ and the derived files           tikzscale.ins,
 					\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 						\tikzset{external/remake next}%
 % 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
+% 						\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
 					}{}%
 				}{%
 					\tikzset{external/remake next}%
@@ -918,6 +919,7 @@ and the derived files           tikzscale.ins,
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
 				\pgfmathsetmacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
+% 				\PackageWarning{tikzscale}{errorRatio \errorRatio\MessageBreak for #3}%
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
 				\breakforeach%
