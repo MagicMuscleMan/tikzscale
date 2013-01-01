@@ -368,6 +368,7 @@ and the derived files           tikzscale.ins,
 % \section{Further Ideas}
 % \begin{itemize}
 %	\item When the externalization is temporarily deactivated, there is an error.
+%	\item There seems to be a regression with the default axis ratio, axisratio=1 should be the default, fix it and document it.
 %	\item It might be a good idea to use the file names as figure names.
 %	\item When the externalization library and the axis ratio are used in a new graphic, the graphic is generated in the first two runs, where one run should be enough.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -578,12 +579,31 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there.
 %    \begin{macrocode}
-	\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
-	\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+	\NewDocumentCommand{\tikzscale@patchTikzpicture}{}{%
+		\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+		\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+	}%
+%    \end{macrocode}
+	% Do the patching here, too, as even if externalization library is used, there is no guarantee, that \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called. There is no problem in patching twice, as we are in \cmd{\AtEndPreamble}, thus externalization has already been loaded (only most probably, as always with LaTeX-dependencies).
+%    \begin{macrocode}
+	\tikzscale@patchTikzpicture
 %    \end{macrocode}
 %	If the externalization library has been loaded, prepare it for use together with tikzscale.
 %    \begin{macrocode}
 	\ifTikzLibraryLoaded{external}{%
+		%
+%    \end{macrocode}
+%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead.
+%    \begin{macrocode}
+		\apptocmd{\tikzexternaldisable}{%
+			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+			\tikzscale@patchTikzpicture
+		}{}{\PackageError{tikzscale}{Patching tikzexternaldisable failed}}%
+		%
+		\apptocmd{\tikzexternalenable}{%
+			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+			\tikzscale@patchTikzpicture
+		}{}{\PackageError{tikzscale}{Patching tikzexternalenable failed}}%
 %    \end{macrocode}
 		% Patch the externalization command to also save the axis ratio if given. Unfortunately, \cmd{\apptocmd} cannot be used, as patching fails due to "nested patching command and parameters in patch", thus, manual patching is in order.
 %    \begin{macrocode}
