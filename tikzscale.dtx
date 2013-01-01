@@ -367,7 +367,9 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item When the externalization library is used, the graphic files get regenerated more often than necessary. This is, because the axis ratio is not saved, thus assumed unknown and the graphic is thus regenerated. For performance reasons if a default axis ratio is used, the plot is not regenerated. If a non-default axis ratio has been used for generating the externalized graphic and the default axis ratio is used in the current run, this is not detected and the graphic has the wrong size at the moment. You can, of course, delete the externalized graphic to generate a new one with the correct size. This should be avoidable by using pgfexternalstorecommand from pgfcoreexternal.code.tex.
+%	\item When the externalization is temporarily deactivated, there is an error.
+%	\item It might be a good idea to use the file names as figure names.
+%	\item When the externalization library and the axis ratio are used in a new graphic, the graphic is generated in the first two runs, where one run should be enough.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
@@ -428,23 +430,11 @@ and the derived files           tikzscale.ins,
 	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
-	\ProvideDocumentCommand{\tikzexternalize@hasbeencalled}{}{0}%
 %    \end{macrocode}
-	% Define a test to check if the current graphic should be drawn and scaled.
+	% Set the same check as in file tikzexternalshared.code.tex and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all.
 %    \begin{macrocode}
-	\ifboolexpr{test {\ifundef{\tikzexternalize}} or test {\ifdefstring{\tikzexternalize@hasbeencalled}{0}}}{%
-%    \end{macrocode}
-		% Always draw and scale the graphic if externalization library has not been loaded or not been activated.
-%    \begin{macrocode}
-		\def\tikzscale@ifDrawAndScale#1#2{#1}%
-	}{%
-%    \end{macrocode}
-		% If externalization library has been loaded and activated, draw and scale the graphic if it is to be externalized.
-%    \begin{macrocode}
-		\def\tikzscale@ifDrawAndScale#1#2{%
-			\tikzifexternalizingnext{#1}{#2}%
-		}%
-	}%
+	\ProvideDocumentCommand{\tikzifexternalizehasbeencalled}{mm}{#2}%
+% 	}%
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scale}
@@ -476,6 +466,19 @@ and the derived files           tikzscale.ins,
 \def\pgfmathsetglobalmacro#1#2{%
 	\pgfmathparse{#2}%
 	\global\let#1\pgfmathresult%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\ifTikzLibraryLoaded}
+% This is a general command, which might be useful for inclusion into the tikz package. This is taken from \href{http://tex.stackexchange.com/a/48472}{stackexchange} and simplified.
+%    \begin{macrocode}
+\def\ifTikzLibraryLoaded#1#2#3{%
+	\ifcsdef{tikz@library@#1@loaded}{%
+		#2%
+	}{%
+		#3%
+	}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -575,8 +578,31 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there.
 %    \begin{macrocode}
-	\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageWarning{tikzscale}{Patching tikzpicture not successful}}%
-	\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageWarning{tikzscale}{Patching endtikzpicture not successful}}%
+	\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+	\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+%    \end{macrocode}
+%	If the externalization library has been loaded, prepare it for use together with tikzscale.
+%    \begin{macrocode}
+	\ifTikzLibraryLoaded{external}{%
+%    \end{macrocode}
+		% Patch the externalization command to also save the axis ratio if given. Unfortunately, \cmd{\apptocmd} cannot be used, as patching fails due to "nested patching command and parameters in patch", thus, manual patching is in order.
+%    \begin{macrocode}
+		\LetLtxMacro{\tikzscale@externalend@storeshifts}{\pgf@externalend@storeshifts}%
+		\def\pgf@externalend@storeshifts#1{%
+			\tikzscale@externalend@storeshifts{#1}%
+			\ifpgfexternal@info
+%    \end{macrocode}
+				% The axis ratio can only be saved, if it has been specified. Thus, the existence of the variable in the dpth file indicates if the axis ratio has been given in the last run.
+%    \begin{macrocode}
+				\ifdef{\requestedAxisRatio}{%
+%    \end{macrocode}
+					% Write the axis ratio into the dpth file into variable \cmd{\tikzscale@oldAxisRatio} as in the macro \cmd{\pgf@externalend@storeshifts} from file pgfcoreexternal.code.tex.
+%    \begin{macrocode}
+					\immediate\write#1{\noexpand\pgfexternal@restore{\noexpand\def\noexpand\tikzscale@oldAxisRatio{\requestedAxisRatio}}}%
+				}{}%
+			\fi
+		}%
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -707,60 +733,22 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\pgfkeys{/tikzscale, #1}%
 %    \end{macrocode}
-	% Draw and scale the graphic if it can or should not be loaded from the externalized file.
+	% Check if the current graphic should be either drawn and scaled or simply included. As externalization can get activated or deactivated at any time (if the library has been loaded in the preamble), check in every call what to do.
 %    \begin{macrocode}
-	\tikzscale@ifDrawAndScale{%
-		\tikzscale@includetikzUnexternalized[#1]{#2}%
+	\tikzifexternalizehasbeencalled{%
+%    \end{macrocode}
+		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
+%    \begin{macrocode}
+		\tikzifexternalizingnext{%
+			\tikzscale@includetikzUnexternalized[#1]{#2}%
+		}{%
+			\tikzscale@includetikzWithExternalization{#2}%
+		}%
 	}{%
 %    \end{macrocode}
-		% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight of the externalized graphic
+		% Always draw and scale the graphic if externalization library has not been loaded or is deactivated.
 %    \begin{macrocode}
-		\ifboolexpr{test {\ifdef{\tikzexternalgetnextfilename}}}{%
-			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
-			\pgfexternalreaddpth{\tikzscale@externalizationName}%
-%    \end{macrocode}
-			% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The axis ratio does not have to be checked, as is is always correct. This is because if it gets changed, the width and the height get changed, too, and one of these changes gets detected.
-%    \begin{macrocode}
-			\ifdef{\requestedWidth}{%
-				\ifdef{\pgfexternalwidth}{%
-					\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
-						\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
-% 						\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
-					}{}%
-				}{%
-					\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
-				}%
-			}{}%
-			\ifdef{\requestedHeight}{%
-				\ifdef{\pgfexternalheight}{%
-					\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
-						\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
-					}{}%
-				}{%
-					\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
-				}%
-			}{}%
-			\ifdef{\requestedAxisRatio}{%
-				\ifdef{\tikzscale@oldAxisRatio}{%
-					\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
-						\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
-					}{}%
-					\global\undef{\tikzscale@oldAxisRatio}%
-				}{%
-					\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
-				}%
-			}{}%
-		}{%
-			\tikzset{external/remake next}%
-			\PackageWarning{tikzscale}{Generate \tikzscale@externalizationName \MessageBreak because no file found}%
-		}%
-		\input{#2}%
+		\tikzscale@includetikzUnexternalized[#1]{#2}%
 	}%
 }
 %    \end{macrocode}
@@ -801,6 +789,62 @@ and the derived files           tikzscale.ins,
 		% Everything else results in an error.
 		\tikzscale@invalidKeyError{#2}%
 	}%
+}
+%    \end{macrocode}
+%\end{macro}
+
+% \begin{macro}{\tikzscale@includetikzWithExternalization}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@includetikzWithExternalization}{m}{%
+%    \end{macrocode}
+	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic. This should be done iff externalization is active at the moment.
+%    \begin{macrocode}
+	\tikzifexternalizehasbeencalled{%
+		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+		\pgfexternalreaddpth{\tikzscale@externalizationName}%
+%    \end{macrocode}
+		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The saved axis ratio from the last run is checked, too, as it might have been changed by the user between the last run and the current run.
+%    \begin{macrocode}
+		\ifdef{\requestedWidth}{%
+			\ifdef{\pgfexternalwidth}{%
+				\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
+					\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
+% 						\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
+				}{}%
+			}{%
+				\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
+			}%
+		}{}%
+		\ifdef{\requestedHeight}{%
+			\ifdef{\pgfexternalheight}{%
+				\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
+					\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
+				}{}%
+			}{%
+				\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
+			}%
+		}{}%
+		\ifdef{\requestedAxisRatio}{%
+			\ifdef{\tikzscale@oldAxisRatio}{%
+				\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
+					\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
+				}{}%
+				\undef{\tikzscale@oldAxisRatio}%
+			}{%
+				\tikzset{external/remake next}%
+% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
+			}%
+		}{}%
+	}{%
+		\tikzset{external/remake next}%
+		\PackageWarning{tikzscale}{Generate \tikzscale@externalizationName \MessageBreak because no file found}%
+	}%
+	\input{#1}%
 }
 %    \end{macrocode}
 %\end{macro}
