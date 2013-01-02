@@ -370,7 +370,6 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item When the externalization library and the axis ratio are used in a new graphic, the graphic is generated in the first two runs, where one run should be enough.
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -849,44 +848,57 @@ and the derived files           tikzscale.ins,
 	\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
 	\pgfexternalreaddpth{\tikzscale@externalizationName}%
 %    \end{macrocode}
-		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The saved axis ratio from the last run is checked, too, as it might have been changed by the user between the last run and the current run.
+	% Check if the next figure has to be remade. If no dpth file exist, it need not and must not be remade, as otherwise no md5-file is generated and thus one extra compilation run is necessary.
+%    \begin{macrocode}
+	\IfFileExists{\tikzscale@externalizationName.dpth}{%
+		\tikzscale@checkRequestedSizeChanges
+	}{}%
+	\input{#1}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@checkRequestedSizeChanges}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@checkRequestedSizeChanges}{}{%
+%    \end{macrocode}
+	% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The saved axis ratio from the last run is checked, too, as it might have been changed by the user between the last run and the current run.
 %    \begin{macrocode}
 	\ifdef{\requestedWidth}{%
 		\ifdef{\pgfexternalwidth}{%
 			\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 				\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
-% 						\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
+% 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
+% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
 		}%
 	}{}%
 	\ifdef{\requestedHeight}{%
 		\ifdef{\pgfexternalheight}{%
 			\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 				\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
+% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
 		}%
 	}{}%
 	\ifdef{\requestedAxisRatio}{%
 		\ifdef{\tikzscale@oldAxisRatio}{%
 			\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 				\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
 			}{}%
 			\undef{\tikzscale@oldAxisRatio}%
 		}{%
 			\tikzset{external/remake next}%
-% 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
+% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
 		}%
 	}{}%
-	\input{#1}%
 }
 %    \end{macrocode}
 %\end{macro}
