@@ -370,13 +370,13 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item It might be a good idea to use the file names as figure names, but probably only if the name was already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item When the externalization library and the axis ratio are used in a new graphic, the graphic is generated in the first two runs, where one run should be enough.
-%	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
+%	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
+%	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
-%	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met.
+%	\item The final sizing parameters should be saved per figure in the aux file. The first rendering each run should be performed with the aux file's parameters into an sbox. The scaling algorithms should only be called, if the sizing requirements are not met. The purpose is similar to the externalization library.
 %	\item Using something like [x=5pt] as an argument to the axis environment, e.g. to scale the units in bar plots, is problematic, as tikzscale changes the behaviour, i.e. stops the scaling.
 % \end{itemize}
 %
@@ -840,10 +840,11 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 
 % \begin{macro}{\tikzscale@includetikzWithExternalization}
+% This macro includes a tikzpicture file using the externalization library. As a precondition, the externalization must be loaded and active.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikzWithExternalization}{m}{%
 %    \end{macrocode}
-	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic. This should be done iff externalization is active at the moment.
+	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic.
 %    \begin{macrocode}
 	\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
 	\pgfexternalreaddpth{\tikzscale@externalizationName}%
