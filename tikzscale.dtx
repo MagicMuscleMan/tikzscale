@@ -367,8 +367,7 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item When the externalization is temporarily deactivated, there is an error.
-%	\item There seems to be a regression with the default axis ratio, axisratio=1 should be the default, fix it and document it.
+%	\item document default axis ratio (axisratio=1).
 %	\item It might be a good idea to use the file names as figure names.
 %	\item When the externalization library and the axis ratio are used in a new graphic, the graphic is generated in the first two runs, where one run should be enough.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -419,9 +418,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \AtEndPreamble{%
 %    \end{macrocode}
-	% Activate the output of the graphics sizes into the dpth files (one file per graphic). This key is used if the externalization library is activated to check if the scaling is correct, otherwise the code is not needed
+	% Activate the output of the graphics sizes into the dpth files (one file per graphic). This key is used if the externalization library is activated to check if the scaling is correct, otherwise the code is not needed.
 %    \begin{macrocode}
-	\ifdef{\tikzifexternalizing}{%
+	\ifExternalizationLoaded{%
 		\pgfkeys{/pgf/images/external info}%
 	}{}%
 %    \end{macrocode}
@@ -432,10 +431,27 @@ and the derived files           tikzscale.ins,
 	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
 	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
 %    \end{macrocode}
-	% Set the same check as in file tikzexternalshared.code.tex and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all.
+	% The check \cmd{\tikzifexternalizehasbeencalled} from file tikzexternalshared.code.tex is not exactly what is needed in tikzscale, as it always stays true after it has been set by \cmd{\tikzexternalize}. Instead, add a check whether externalization is active and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all. The initial state of \cmd{\tikzscale@externalizationActive} is not trivially known, as an arbitrary combination and order of \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} commands could have been used before the end of the preamble. In the long run, tikzexternalshared.code.tex should offer that check. Until then, we can check whether \cmd{\tikz}=\cmd{\tikzexternal@origtikz} (i.e. externalization disabled) or \cmd{\tikz}=\cmd{\tikzexternal@tikz@replacement} (i.e. externalization enabled) holds (if neither of both holds, this indicates a problem, e.g. another package redefining the command). This is, of course, only needed if the externalization library has been loaded at all. Please note, the implementation of this check as a macro is possible, because tikzscale redefines tikzpicture, whereas the externalization library redefines tikz, so there is no conflict.
 %    \begin{macrocode}
-	\ProvideDocumentCommand{\tikzifexternalizehasbeencalled}{mm}{#2}%
-% 	}%
+	\def\tikzscale@ifExternalizationActive#1#2{%
+		\ifExternalizationLoaded{%
+			\ifdefequal{\tikz}{\tikzexternal@tikz@replacement}{%
+				#1%
+			}{%
+				\ifdefequal{\tikz}{\tikzexternal@origtikz}{%
+				}{%
+					\PackageWarning{tikzscale}{Status of externalization is unknown, thus I assume it is deactivated.}%
+				}%
+%    \end{macrocode}
+				% It's important, that this code is below the above code, as the below code can change the meaning of \cmd{\tikz} through side effects.
+%    \begin{macrocode}
+				#2%
+			}%
+		}{%
+			#2%
+		}%
+	}%
+%    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@scale}
@@ -480,6 +496,14 @@ and the derived files           tikzscale.ins,
 	}{%
 		#3%
 	}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\ifExternalizationLoaded}
+%    \begin{macrocode}
+\def\ifExternalizationLoaded#1#2{%
+	\ifTikzLibraryLoaded{external}{#1}{#2}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -590,7 +614,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %	If the externalization library has been loaded, prepare it for use together with tikzscale.
 %    \begin{macrocode}
-	\ifTikzLibraryLoaded{external}{%
+	\ifExternalizationLoaded{%
 		%
 %    \end{macrocode}
 %	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead.
@@ -755,7 +779,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Check if the current graphic should be either drawn and scaled or simply included. As externalization can get activated or deactivated at any time (if the library has been loaded in the preamble), check in every call what to do.
 %    \begin{macrocode}
-	\tikzifexternalizehasbeencalled{%
+	\tikzscale@ifExternalizationActive{%
 %    \end{macrocode}
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
@@ -819,7 +843,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic. This should be done iff externalization is active at the moment.
 %    \begin{macrocode}
-	\tikzifexternalizehasbeencalled{%
+	\tikzscale@ifExternalizationActive{%
 		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
 		\pgfexternalreaddpth{\tikzscale@externalizationName}%
 %    \end{macrocode}
