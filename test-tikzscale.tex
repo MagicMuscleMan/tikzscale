@@ -57,13 +57,13 @@
 		\item Use includegraphics with a scaled two dimensional plot with line width and an axis ratio of 1\\%
 			\includegraphics[width=\linewidth,axisratio=1]{testgraphic2D.tikz}%
 		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5\\%
-			\includegraphics[height=1\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
 		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 and temporarily deactivated externalization\\%
 			\tikzexternaldisable
-			\includegraphics[height=1\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
 			\tikzexternalenable
 		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 again\\%
-			\includegraphics[height=1\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
 		\item Use includegraphics with a scaled two dimensional plot with line width and a default axis ratio\\%
 			\includegraphics[width=\linewidth]{testgraphic2D.tikz}%
 		\item Input a two dimensional plot with a tight frame with width \newlength{\mylen}\settowidth{\mylen}{\frame{\input{testgraphic2D.tikz}}}\the\mylen\\%
