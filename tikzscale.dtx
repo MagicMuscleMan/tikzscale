@@ -843,51 +843,46 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic. This should be done iff externalization is active at the moment.
 %    \begin{macrocode}
-	\tikzscale@ifExternalizationActive{%
-		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
-		\pgfexternalreaddpth{\tikzscale@externalizationName}%
+	\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+	\pgfexternalreaddpth{\tikzscale@externalizationName}%
 %    \end{macrocode}
 		% Check if the sizes are still correct, i.e. agree with the sizes of the externalized PDF graphic. The saved axis ratio from the last run is checked, too, as it might have been changed by the user between the last run and the current run.
 %    \begin{macrocode}
-		\ifdef{\requestedWidth}{%
-			\ifdef{\pgfexternalwidth}{%
-				\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
-					\tikzset{external/remake next}%
+	\ifdef{\requestedWidth}{%
+		\ifdef{\pgfexternalwidth}{%
+			\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
+				\tikzset{external/remake next}%
 % 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
 % 						\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
-				}{}%
-			}{%
-				\tikzset{external/remake next}%
+			}{}%
+		}{%
+			\tikzset{external/remake next}%
 % 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
-			}%
-		}{}%
-		\ifdef{\requestedHeight}{%
-			\ifdef{\pgfexternalheight}{%
-				\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
-					\tikzset{external/remake next}%
+		}%
+	}{}%
+	\ifdef{\requestedHeight}{%
+		\ifdef{\pgfexternalheight}{%
+			\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
+				\tikzset{external/remake next}%
 % 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
-				}{}%
-			}{%
-				\tikzset{external/remake next}%
+			}{}%
+		}{%
+			\tikzset{external/remake next}%
 % 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
-			}%
-		}{}%
-		\ifdef{\requestedAxisRatio}{%
-			\ifdef{\tikzscale@oldAxisRatio}{%
-				\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
-					\tikzset{external/remake next}%
-% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
-				}{}%
-				\undef{\tikzscale@oldAxisRatio}%
-			}{%
+		}%
+	}{}%
+	\ifdef{\requestedAxisRatio}{%
+		\ifdef{\tikzscale@oldAxisRatio}{%
+			\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 				\tikzset{external/remake next}%
+% 						\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
+			}{}%
+			\undef{\tikzscale@oldAxisRatio}%
+		}{%
+			\tikzset{external/remake next}%
 % 					\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
-			}%
-		}{}%
-	}{%
-		\tikzset{external/remake next}%
-		\PackageWarning{tikzscale}{Generate \tikzscale@externalizationName \MessageBreak because no file found}%
-	}%
+		}%
+	}{}%
 	\input{#1}%
 }
 %    \end{macrocode}
