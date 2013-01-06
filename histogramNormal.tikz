@@ -1,0 +1,9 @@
+\begin{tikzpicture}
+	\begin{axis}[
+		ybar interval
+	]
+	% a data file containing 8000 normally distributed
+	% random numbers of mean 0 and variance 1
+	\addplot+[hist={data=x}] file {pgfplots.randn.dat};
+	\end{axis}
+\end{tikzpicture}
