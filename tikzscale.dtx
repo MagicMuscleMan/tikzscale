@@ -403,6 +403,7 @@ and the derived files           tikzscale.ins,
 %     \item devendra
 %         \begin{itemize}
 %             \item Reported bugs when using the externalization library together with tikzscale, which lead to a fix.
+%             \item Reported a problem when using data files, which lead to a fix regarding \cmd{\endlinechar}.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -601,12 +602,25 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
 	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
-%    \end{macrocode}
-	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there.
-%    \begin{macrocode}
 	\NewDocumentCommand{\tikzscale@patchTikzpicture}{}{%
-		\pretocmd{\tikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
-		\apptocmd{\endtikzpicture}{\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+%    \end{macrocode}
+		% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there.
+%    \begin{macrocode}
+		\pretocmd{\tikzpicture}{%
+			\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
+		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+		%
+		\apptocmd{\endtikzpicture}{%
+			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+		}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+%    \end{macrocode}
+	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
+%    \begin{macrocode}
+		\apptocmd{\tikzpicture}{%
+			\ifdef{\tikzscale@restoreEndLineChar}{%
+				\tikzscale@restoreEndLineChar
+			}{}%
+		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
 	}%
 %    \end{macrocode}
 	% Do the patching here, too, as even if externalization library is used, there is no guarantee, that \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called. There is no problem in patching twice, as we are in \cmd{\AtEndPreamble}, thus externalization has already been loaded (only most probably, as always with LaTeX-dependencies).
@@ -660,29 +674,28 @@ and the derived files           tikzscale.ins,
 	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
 %    \begin{macrocode}
 	\begingroup
-	%    \end{macrocode}
-	% It happened at least once together with externalization, that the deactivation of the new includegraphics command did not work, so do it again to be safe (maybe reentrance problem with multiple tikzpicture calls?).
-%    \begin{macrocode}
-	\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
-	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all.
+		% It happened at least once together with externalization, that the deactivation of the new includegraphics command did not work, so do it again to be safe (maybe reentrance problem with multiple tikzpicture calls?).
 %    \begin{macrocode}
-	\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
-	\endlinechar=-1%
+		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
-	% Find the exact file name, as the ending and the path could be omitted.
+		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
 %    \begin{macrocode}
-	\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
+		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
+		\endlinechar=-1%
 %    \end{macrocode}
-	% Check if the found file is a TikZ file.
-	%    \begin{macrocode}
-	\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}%
-	\ifcsdef{tikzscale@testTikzFile}{%
-		\tikzscale@includetikz[#1]{\tikzscale@fileName}%
-	}{%
-		\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
-	}%
-	\tikzscale@restoreEndLineChar
+		% Find the exact file name, as the ending and the path could be omitted.
+%    \begin{macrocode}
+		\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
+%    \end{macrocode}
+		% Check if the found file is a TikZ file.
+%    \begin{macrocode}
+		\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}%
+		\ifcsdef{tikzscale@testTikzFile}{%
+			\tikzscale@includetikz[#1]{\tikzscale@fileName}%
+		}{%
+			\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
+		}%
 	\endgroup
 }%
 %    \end{macrocode}
