@@ -360,7 +360,7 @@ and the derived files           tikzscale.ins,
 % \section{Compatibility}
 % Using both the externalization library and tikzscale seems to have a race condition when a makefile is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs. For $X = 1$, obviously, no race condition could be observed. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
 %
-% Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ of PGFPlots.
+% Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ or PGFPlots.
 %
 % \subsection{Load Order}
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
