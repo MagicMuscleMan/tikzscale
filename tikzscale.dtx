@@ -619,7 +619,9 @@ and the derived files           tikzscale.ins,
 		\apptocmd{\tikzpicture}{%
 			\ifdef{\tikzscale@restoreEndLineChar}{%
 				\tikzscale@restoreEndLineChar
-			}{}%
+			}{%
+				\PackageWarning{tikzscale}{restoreEndLineChar is not defined and it should be defined.}%
+			}%
 		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
 	}%
 %    \end{macrocode}
@@ -881,8 +883,8 @@ and the derived files           tikzscale.ins,
 		\ifdef{\pgfexternalwidth}{%
 			\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference}%
-% 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{#2}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference \MessageBreak (requestedWidth: \requestedWidth, pgfexternalwidth: \pgfexternalwidth)}%
+% 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{current file}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
@@ -893,7 +895,7 @@ and the derived files           tikzscale.ins,
 		\ifdef{\pgfexternalheight}{%
 			\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference \MessageBreak (requestedHeight: \requestedHeight, pgfexternalheight: \pgfexternalheight)}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
@@ -904,12 +906,12 @@ and the derived files           tikzscale.ins,
 		\ifdef{\tikzscale@oldAxisRatio}{%
 			\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference}%
+% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference \MessageBreak (requestedAxisRatio: \requestedAxisRatio, oldAxisRatio: \tikzscale@oldAxisRatio)}%
 			}{}%
 			\undef{\tikzscale@oldAxisRatio}%
 		}{%
 			\tikzset{external/remake next}%
-% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
+			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
 		}%
 	}{}%
 }
