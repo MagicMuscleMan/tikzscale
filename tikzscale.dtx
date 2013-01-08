@@ -406,6 +406,10 @@ and the derived files           tikzscale.ins,
 %             \item Reported bugs when using the externalization library together with tikzscale, which lead to a fix.
 %             \item Reported a problem when using data files, which lead to a fix regarding \cmd{\endlinechar}.
 %         \end{itemize}
+%     \item Mohammad Reza Keshtkaran
+%         \begin{itemize}
+%             \item Reported a bug when using plain old \LaTeX with an eps file, which lead to a fix.
+%         \end{itemize}
 % \end{itemize}
 %
 %
@@ -707,6 +711,10 @@ and the derived files           tikzscale.ins,
 		\ifcsdef{tikzscale@testTikzFile}{%
 			\tikzscale@includetikz[#1]{\tikzscale@fileName}%
 		}{%
+%    \end{macrocode}
+		% Restore \cmd{\endlinechar} before calling code from other packages. This is not only cleaner, but really avoids an error when using the plain old latex (with dvi output) with an eps graphic.
+%    \begin{macrocode}
+			\tikzscale@restoreEndLineChar
 			\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
 		}%
 	\endgroup
