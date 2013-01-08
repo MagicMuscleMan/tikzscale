@@ -370,6 +370,9 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
+%	\item testgraphic2D is not externalized
+%	\item The \cmd{\tikzscale@trim} commands generates a warning in the figure log files that "Scaling of linewidth.tikz was only (tikzscale) accurate to 202.83331pt on input line 30."
+%	\item Some pictures are generated twice in a row.
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -527,6 +530,15 @@ and the derived files           tikzscale.ins,
 	\edef\tikzscale@eforcsvlist{#2}%
 	\expandafter\forcsvlist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@eforcsvlist}%
 }
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@trim}
+% These is a general command to trim leading and trailing spaces, which might be useful for inclusion into another package taken from the following \href{http://www.matijs.net/blog/2006/07/20/how-to-trim-spaces-in-tex}{homepage}.
+%    \begin{macrocode}
+\def\tikzscale@trim#1{%
+	\ignorespaces#1\unskip
+}%
 %    \end{macrocode}
 %\end{macro}
 %
@@ -821,7 +833,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
 %    \begin{macrocode}
-		\input{#2}%
+		\tikzscale@trim{\input{#2}}%
 	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
 %    \end{macrocode}
 		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
@@ -868,7 +880,7 @@ and the derived files           tikzscale.ins,
 	\IfFileExists{\tikzscale@externalizationName.dpth}{%
 		\tikzscale@checkRequestedSizeChanges
 	}{}%
-	\input{#1}%
+	\tikzscale@trim{\input{#1}}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -939,10 +951,10 @@ and the derived files           tikzscale.ins,
 	\tikzscale@prepareTikzpicture
 	\elseif{test {\ifdef{\requestedWidth}} and test {\ifundef{\requestedHeight}}}{%
 		\def\requestedSize{\requestedWidth}%
-		\tikzscale@scaleTikzpictureTo{\wd}{\input{#1}}{#1}%
+		\tikzscale@scaleTikzpictureTo{\wd}{\tikzscale@trim{\input{#1}}}{#1}%
 	}{test {\ifundef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
 		\def\requestedSize{\requestedHeight}%
-		\tikzscale@scaleTikzpictureTo{\ht}{\input{#1}}{#1}%
+		\tikzscale@scaleTikzpictureTo{\ht}{\tikzscale@trim{\input{#1}}}{#1}%
 	}{%
 		\tikzscale@invalidKeyError{#1}%
 	}%
@@ -970,12 +982,12 @@ and the derived files           tikzscale.ins,
 		\let\requestedSize\requestedWidth
 		\def\tikzscale@width{\requestedWidth}%
 		\pgfmathsetmacro{\tikzscale@height}{\requestedWidth / \requestedAxisRatio}%
-		\tikzscale@resizePlotWithAxesRatioTo{\wd}{\tikzscale@width}{\input{#1}}{#1}%
+		\tikzscale@resizePlotWithAxesRatioTo{\wd}{\tikzscale@width}{\tikzscale@trim{\input{#1}}}{#1}%
 	}{test {\ifundef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
 		\let\requestedSize\requestedHeight
 		\def\tikzscale@height{\requestedHeight}%
 		\pgfmathsetmacro{\tikzscale@width}{\requestedHeight * \requestedAxisRatio}%
-		\tikzscale@resizePlotWithAxesRatioTo{\ht}{\tikzscale@height}{\input{#1}}{#1}%
+		\tikzscale@resizePlotWithAxesRatioTo{\ht}{\tikzscale@height}{\tikzscale@trim{\input{#1}}}{#1}%
 	}{%
 		\tikzscale@invalidKeyError{#1}%
 	}%
@@ -1071,7 +1083,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizePlotTo}{m}{%
 	\def\fileName{#1}%
-	\def\content{\input{#1}}%
+	\def\content{\tikzscale@trim{\input{#1}}}%
 	\tikzscale@preparePlot
 	\def\tikzscale@width{\requestedWidth}%
 	\def\tikzscale@height{\requestedHeight}%
