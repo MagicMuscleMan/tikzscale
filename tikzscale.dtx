@@ -370,9 +370,7 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item testgraphic2D is not externalized
-%	\item The \cmd{\tikzscale@trim} commands generates a warning in the figure log files that "Scaling of linewidth.tikz was only (tikzscale) accurate to 202.83331pt on input line 30."
-%	\item Some pictures are generated twice in a row.
+%	\item The \cmd{\tikzscale@trim} commands generates a warning in the figure log files that "Scaling of linewidth.tikz was only (tikzscale) accurate to 202.83331pt on input line 30." and other warnings, but they do not seem to have any influence.
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -626,15 +624,15 @@ and the derived files           tikzscale.ins,
 			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
 		}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
 %    \end{macrocode}
-	% TODO: This should only be redefined when the new includgraphics command is called.
 	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
 %    \begin{macrocode}
 		\apptocmd{\tikzpicture}{%
+%    \end{macrocode}
+			% \cmd{\tikzscale@restoreEndLineChar} is only defined if \cmd{\includegraphics} has been called. If, instead, \cmd{tikzpicture} has been called directly, it is not defined, so do a check first.
+%    \begin{macrocode}
 			\ifdef{\tikzscale@restoreEndLineChar}{%
 				\tikzscale@restoreEndLineChar
-			}{%
-				\PackageWarning{tikzscale}{restoreEndLineChar is not defined and it should be defined.}%
-			}%
+			}{}%
 		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
 	}%
 %    \end{macrocode}
