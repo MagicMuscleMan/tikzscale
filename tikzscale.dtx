@@ -616,11 +616,15 @@ and the derived files           tikzscale.ins,
 	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
 	\NewDocumentCommand{\tikzscale@patchTikzpicture}{}{%
 %    \end{macrocode}
-		% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Use \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture}.
+		% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Using \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture} does not work.
 %    \begin{macrocode}
-		\apptocmd{\tikzpicture}{%
+		\pretocmd{\tikzpicture}{%
 			\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+		%
+		\apptocmd{\endtikzpicture}{%
+			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+		}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
 %    \end{macrocode}
 	% TODO: This should only be redefined when the new includgraphics command is called.
 	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
