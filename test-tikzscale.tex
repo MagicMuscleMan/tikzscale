@@ -6,6 +6,8 @@
 \usepackage{pgfplots}
 \usepackage{currfile}
 \usepackage{lmodern}
+% Use the package ifpdf to share one test document between pdflatex and latex
+\usepackage{ifpdf}
 % Load the MWE package, although its functionality is not needed. The loading highlights, that some graphics used below are part of the MWE package.
 \usepackage{mwe}
 
@@ -30,22 +32,8 @@
 			\includegraphics[width=5cm]{testRectangle}%
 		\item Use includegraphics with scaling while having column width already\\%
 			\includegraphics[width=\linewidth]{linewidth}%
-		\item Use includegraphics with jpg\\%
-			\includegraphics{example-grid-100x100bp.jpg}%
-		\item Use includegraphics with pdf\\%
-			\includegraphics{example-grid-100x100bp.pdf}%
-		\item Use includegraphics with png\\%
-			\includegraphics{example-grid-100x100bp.png}%
-% 		\item Use includegraphics with eps%
-% 			\includegraphics{example-grid-100x100bp.eps}%
-		\item Use includegraphics with pdf and scaling\\%
-			\includegraphics[width=0.3\linewidth]{example-grid-100x100bp.pdf}%
-		\item Use includegraphics with column width\\%
-			\includegraphics[width=\linewidth]{example-grid-100x100bp.jpg}%
 		\item Use \texttt{input} with pgfplots\\%
 			\input{pgfplots-test.tikz}%
-		\item Input a 2D pgfplots\\
-			\input{testgraphic2D.tikz}%
 		\item Use pgfplots without optional parameter\\%
 			\includegraphics{pgfplots-test}%
 		\item Use pgfplots with given width and height\\%
@@ -54,24 +42,41 @@
 			\includegraphics{testNode.tikz}%
 % 		\item Use includegraphics with scaling only a node results in an error\\%
 % 			\includegraphics[width=\linewidth]{testNode.tikz}%
-		\item Use includegraphics with a two dimensional plot\\%
-			\includegraphics{testgraphic2D.tikz}%
-		\item Use includegraphics with a scaled two dimensional plot with line width and an axis ratio of 1\\%
-			\includegraphics[width=\linewidth,axisratio=1]{testgraphic2D.tikz}%
-		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5\\%
-			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
-		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 and temporarily deactivated externalization\\%
-			\tikzexternaldisable
-			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
-			\tikzexternalenable
-		\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 again\\%
-			\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
-		\item Use includegraphics with a scaled two dimensional plot with line width and a default axis ratio\\%
-			\includegraphics[width=\linewidth]{testgraphic2D.tikz}%
-		\item Input a two dimensional plot with a tight frame with width \newlength{\mylen}\settowidth{\mylen}{\frame{\input{testgraphic2D.tikz}}}\the\mylen\\%
-			\frame{\input{testgraphic2D.tikz}}
-		\item Use a two dimensional plot with a tight frame with width \settowidth{\mylen}{\frame{\includegraphics{testgraphic2D.tikz}}}\the\mylen\\%
-			\frame{\includegraphics{testgraphic2D.tikz}}
+		\ifpdf
+			\item Use includegraphics with jpg\\%
+				\includegraphics{example-grid-100x100bp.jpg}%
+			\item Use includegraphics with pdf\\%
+				\includegraphics{example-grid-100x100bp.pdf}%
+			\item Use includegraphics with png\\%
+				\includegraphics{example-grid-100x100bp.png}%
+			\item Use includegraphics with pdf and scaling\\%
+				\includegraphics[width=0.3\linewidth]{example-grid-100x100bp.pdf}%
+			\item Use includegraphics with column width\\%
+				\includegraphics[width=\linewidth]{example-grid-100x100bp.jpg}%
+			\item Input a 2D pgfplots\\
+				\input{testgraphic2D.tikz}%
+			\item Use includegraphics with a two dimensional plot\\%
+				\includegraphics{testgraphic2D.tikz}%
+			\item Use includegraphics with a scaled two dimensional plot with line width and an axis ratio of 1\\%
+				\includegraphics[width=\linewidth,axisratio=1]{testgraphic2D.tikz}%
+			\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5\\%
+				\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+			\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 and temporarily deactivated externalization\\%
+				\tikzexternaldisable
+				\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+				\tikzexternalenable
+			\item Use includegraphics with a scaled two dimensional plot with given height and an axis ratio of 0.5 again\\%
+				\includegraphics[height=\linewidth,axisratio=0.5]{testgraphic2D.tikz}%
+			\item Use includegraphics with a scaled two dimensional plot with line width and a default axis ratio\\%
+				\includegraphics[width=\linewidth]{testgraphic2D.tikz}%
+			\item Input a two dimensional plot with a tight frame with width \newlength{\mylen}\settowidth{\mylen}{\frame{\input{testgraphic2D.tikz}}}\the\mylen\\%
+				\frame{\input{testgraphic2D.tikz}}
+			\item Use a two dimensional plot with a tight frame with width \settowidth{\mylen}{\frame{\includegraphics{testgraphic2D.tikz}}}\the\mylen\\%
+				\frame{\includegraphics{testgraphic2D.tikz}}
+		\else
+			\item Use includegraphics with eps%
+				\includegraphics{example-grid-100x100bp.eps}%
+		\fi
 		\item Use includegraphics with a histogram of a normal distribution\\%
 			\includegraphics[width=\linewidth,height=0.5\linewidth]{histogramNormal}%
 	\end{itemize}
