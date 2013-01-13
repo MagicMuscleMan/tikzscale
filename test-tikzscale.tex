@@ -14,12 +14,17 @@
 \usetikzlibrary{external}
 \tikzexternalize
 % \tikzexternalize[mode=list and make]
+\ifpdf
+\else
+	\tikzset{external/system call={latex \tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname "\image" "\texsource"; dvips -o "\image".ps "\image".dvi}}
+\fi
 
 \begin{document}
 	\section*{Tests}
 	\begin{itemize}
 		\item Test that with externalization, no picture is generated multiple times.
-		\item Test that there are no warnings without using externalization.
+		\item Test that there are no warnings with and without using externalization.
+		\item Test with \texttt{pdflatex} and \texttt{latex} and do not forget to use \texttt{dvips}.
 		\item Normal input command\\%
 			\input{testRectangle.tikz}%
 		\item Use includegraphics with file ending\\%
@@ -74,8 +79,10 @@
 			\item Use a two dimensional plot with a tight frame with width \settowidth{\mylen}{\frame{\includegraphics{testgraphic2D.tikz}}}\the\mylen\\%
 				\frame{\includegraphics{testgraphic2D.tikz}}
 		\else
-			\item Use includegraphics with eps%
+			\item Use includegraphics with eps (this is not found within dvi, even without tikzscale)\\%
 				\includegraphics{example-grid-100x100bp.eps}%
+			\item Use includegraphics with eps and full path (this is not shown, even without tikzscale)\\%
+				\includegraphics{/usr/share/texlive/texmf-dist/tex/latex/mwe/example-grid-100x100bp.eps}%
 		\fi
 		\item Use includegraphics with a histogram of a normal distribution\\%
 			\includegraphics[width=\linewidth,height=0.5\linewidth]{histogramNormal}%

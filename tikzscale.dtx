@@ -410,6 +410,7 @@ and the derived files           tikzscale.ins,
 %     \item Mohammad Reza Keshtkaran
 %         \begin{itemize}
 %             \item Reported a bug when using plain old \LaTeX with an eps file, which lead to a fix.
+%             \item Reported another bug when using plain old \LaTeX, which lead to some rework to fully support \LaTeX without additional code.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -421,63 +422,6 @@ and the derived files           tikzscale.ins,
 %<*package>
 % \fi
 % \makeatletter
-%
-%\begin{macro}{\tikzexternal}
-%    \begin{macrocode}
-\AtEndPreamble{%
-%    \end{macrocode}
-	% Activate the output of the graphics sizes into the dpth files (one file per graphic). This key is used if the externalization library is activated to check if the scaling is correct, otherwise the code is not needed.
-%    \begin{macrocode}
-	\ifExternalizationLoaded{%
-		\pgfkeys{/pgf/images/external info}%
-	}{}%
-%    \end{macrocode}
-	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
-%    \begin{macrocode}
-	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
-	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
-	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
-	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
-%    \end{macrocode}
-	% The check \cmd{\tikzifexternalizehasbeencalled} from file tikzexternalshared.code.tex is not exactly what is needed in tikzscale, as it always stays true after it has been set by \cmd{\tikzexternalize}. Instead, add a check whether externalization is active and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all. The initial state of \cmd{\tikzscale@externalizationActive} is not trivially known, as an arbitrary combination and order of \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} commands could have been used before the end of the preamble. In the long run, tikzexternalshared.code.tex should offer that check. Until then, we can check whether \cmd{\tikz}=\cmd{\tikzexternal@origtikz} (i.e. externalization disabled) or \cmd{\tikz}=\cmd{\tikzexternal@tikz@replacement} (i.e. externalization enabled) holds (if neither of both holds, this indicates a problem, e.g. another package redefining the command). This is, of course, only needed if the externalization library has been loaded at all. Please note, the implementation of this check as a macro is possible, because tikzscale redefines tikzpicture, whereas the externalization library redefines tikz, so there is no conflict.
-%    \begin{macrocode}
-	\def\tikzscale@ifExternalizationActive#1#2{%
-		\ifExternalizationLoaded{%
-			\ifdefequal{\tikz}{\tikzexternal@tikz@replacement}{%
-				#1%
-			}{%
-				\ifdefequal{\tikz}{\tikzexternal@origtikz}{%
-				}{%
-					\PackageWarning{tikzscale}{Status of externalization is unknown, thus I assume it is deactivated.}%
-				}%
-%    \end{macrocode}
-				% It's important, that this code is below the above code, as the below code can change the meaning of \cmd{\tikz} through side effects.
-%    \begin{macrocode}
-				#2%
-			}%
-		}{%
-			#2%
-		}%
-	}%
-%    \end{macrocode}
-%\end{macro}
-%
-%\begin{macro}{\tikzscale@scale}
-%    \begin{macrocode}
-	\@ifpackageloaded{tikz}{%
-%    \end{macrocode}
-		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus, e.g. 0.04 pt, cannot always be achieved independent of the number of iterations. Use the \href{http://en.wikibooks.org/wiki/TeX/hfuzz}{value} (0.1 pt in an experiment) which is used for overfull paragraph warnings, too.
-%    \begin{macrocode}
-		\newlength{\tikzscale@accuracy}%
-		\setlength{\tikzscale@accuracy}{\hfuzz}%
-%    \end{macrocode}
-		% This is needed in normal TikZ pictures and in PGFPlots, but as the pgfplots package loads the tikz package, it is fine to define it here.
-%    \begin{macrocode}
-		\def\maxTestIterations{10}%
-	}{}%
-}
-%    \end{macrocode}
-%\end{macro}
 %
 % This command draws the plot's border at the right text border, so that thick points or label descriptions can reach into the margin. This should be limited to PGFPlots only if activated.
 %^^A \tikzset{every picture/.style={trim axis right}}
@@ -590,9 +534,31 @@ and the derived files           tikzscale.ins,
 	}
 }
 \ExplSyntaxOff
+%\end{macro}
+%
+%\begin{macro}
+	% The check \cmd{\tikzifexternalizehasbeencalled} from file tikzexternalshared.code.tex is not exactly what is needed in tikzscale, as it always stays true after it has been set by \cmd{\tikzexternalize}. Instead, add a check whether externalization is active and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all. The initial state of \cmd{\tikzscale@externalizationActive} is not trivially known, as an arbitrary combination and order of \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} commands could have been used before the end of the preamble. In the long run, tikzexternalshared.code.tex should offer that check. Until then, we can check whether \cmd{\tikz}=\cmd{\tikzexternal@origtikz} (i.e. externalization disabled) or \cmd{\tikz}=\cmd{\tikzexternal@tikz@replacement} (i.e. externalization enabled) holds (if neither of both holds, this indicates a problem, e.g. another package redefining the command). This is, of course, only needed if the externalization library has been loaded at all. Please note, the implementation of this check as a macro is possible, because tikzscale redefines tikzpicture, whereas the externalization library redefines tikz, so there is no conflict.
+%    \begin{macrocode}
+	\def\tikzscale@ifExternalizationActive#1#2{%
+		\ifExternalizationLoaded{%
+			\ifdefequal{\tikz}{\tikzexternal@tikz@replacement}{%
+				#1%
+			}{%
+				\ifdefequal{\tikz}{\tikzexternal@origtikz}{%
+				}{%
+					\PackageWarning{tikzscale}{Status of externalization is unknown, thus I assume it is deactivated.}%
+				}%
+%    \end{macrocode}
+				% It's important, that this code is below the above code, as the below code can change the meaning of \cmd{\tikz} through side effects.
+%    \begin{macrocode}
+				#2%
+			}%
+		}{%
+			#2%
+		}%
+	}%
 %    \end{macrocode}
 %\end{macro}
-
 %
 %\begin{macro}{\activatetikzscale}
 %    \begin{macrocode}
@@ -613,55 +579,74 @@ and the derived files           tikzscale.ins,
 		\def\tikzscale@graphicspath{{}}%
 	}%
 %    \end{macrocode}
-%    Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command} and replace it by a new more generic command, to have a consistent user interface.
+%    Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command}.
 %    \begin{macrocode}
 	\LetLtxMacro{\tikzscale@oldincludegraphics}{\includegraphics}%
-	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
-	\NewDocumentCommand{\tikzscale@patchTikzpicture}{}{%
 %    \end{macrocode}
-		% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Using \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture} does not work.
+	% Activate the enhanced includegraphics command at end of preamble, so that no other package is interfering (besides on purpose).
 %    \begin{macrocode}
-		\pretocmd{\tikzpicture}{%
-			\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
-		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
-		%
-		\apptocmd{\endtikzpicture}{%
-			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
-		}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+	\tikzscale@useEnhancedIncludegraphics
 %    \end{macrocode}
-	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
+	% Also patch tikzpicture environment to temporarily deactivate the enhanced includegraphics command inside the tikzpicture environment in case the tikzpicture environment is called directly (without includegraphics being called) and loading another graphic (like a PNG file inside of a pgfplot).
 %    \begin{macrocode}
-		\apptocmd{\tikzpicture}{%
+	\tikzscale@patchTikzpictureIncludegraphics
 %    \end{macrocode}
-			% \cmd{\tikzscale@restoreEndLineChar} is only defined if \cmd{\includegraphics} has been called. If, instead, \cmd{tikzpicture} has been called directly, it is not defined, so do a check first.
+	% As \cmd{\endtikzpicture} does not seem to be redefined, patch it here (once) to activate tikzscale's \cmd{\includegraphics} again. This is probably not necessary, but might be handy if there are two tikzpicture environments in one includegraphics environment.
 %    \begin{macrocode}
-			\ifdef{\tikzscale@restoreEndLineChar}{%
-				\tikzscale@restoreEndLineChar
-			}{}%
-		}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
-	}%
+	\tikzscale@patchEndtikzpictureIncludegraphics
 %    \end{macrocode}
-	% Do the patching here, too, as even if externalization library is used, there is no guarantee, that \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called. There is no problem in patching twice, as we are in \cmd{\AtEndPreamble}, thus externalization has already been loaded (only most probably, as always with LaTeX-dependencies).
 %    \begin{macrocode}
-	\tikzscale@patchTikzpicture
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzexternal}
+%    \begin{macrocode}
+\AtEndPreamble{%
+%    \end{macrocode}
+	% Activate the output of the graphics sizes into the dpth files (one file per graphic) if externalization might be used (known at the end of preamble). This key is used if the externalization library is activated to check if the scaling is correct, otherwise the code is not needed.
+%    \begin{macrocode}
+	\ifExternalizationLoaded{%
+		\pgfkeys{/pgf/images/external info}%
+	}{}%
+%    \end{macrocode}
+	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
+%    \begin{macrocode}
+	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
+	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
+	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
+	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+	\@ifpackageloaded{tikz}{%
+%    \end{macrocode}
+		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus, e.g. 0.04 pt, cannot always be achieved independent of the number of iterations. Use the \href{http://en.wikibooks.org/wiki/TeX/hfuzz}{value} (0.1 pt in an experiment) which is used for overfull paragraph warnings, too.
+%    \begin{macrocode}
+		\newlength{\tikzscale@accuracy}%
+		\setlength{\tikzscale@accuracy}{\hfuzz}%
+%    \end{macrocode}
+		% This is needed in normal TikZ pictures and in PGFPlots, but as the pgfplots package loads the tikz package, it is fine to define it here.
+%    \begin{macrocode}
+		\def\maxTestIterations{10}%
+	}{}%
 %    \end{macrocode}
 %	If the externalization library has been loaded, prepare it for use together with tikzscale.
 %    \begin{macrocode}
 	\ifExternalizationLoaded{%
-		%
 %    \end{macrocode}
-%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead.
+%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead. The idea is to get the tikzscale's includegraphics command being called and then redefine tikzpicture and do the rest of the work there.
 %    \begin{macrocode}
 		\apptocmd{\tikzexternaldisable}{%
-			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
-			\tikzscale@patchTikzpicture
+			\tikzscale@useEnhancedIncludegraphics
+			\tikzscale@patchTikzpictureIncludegraphics
 		}{}{\PackageError{tikzscale}{Patching tikzexternaldisable failed}}%
 		%
 		\apptocmd{\tikzexternalenable}{%
-			\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
-			\tikzscale@patchTikzpicture
+			\tikzscale@useEnhancedIncludegraphics
+			\tikzscale@patchTikzpictureIncludegraphics
 		}{}{\PackageError{tikzscale}{Patching tikzexternalenable failed}}%
-%    \end{macrocode}
+%    \end{macrodode}
 		% Patch the externalization command to also save the axis ratio if given. Unfortunately, \cmd{\apptocmd} cannot be used, as patching fails due to "nested patching command and parameters in patch", thus, manual patching is in order.
 %    \begin{macrocode}
 		\LetLtxMacro{\tikzscale@externalend@storeshifts}{\pgf@externalend@storeshifts}%
@@ -680,6 +665,8 @@ and the derived files           tikzscale.ins,
 			\fi
 		}%
 	}{}%
+%    \end{macrocode}
+%    \begin{macrocode}
 }
 %    \end{macrocode}
 %\end{macro}
@@ -697,10 +684,9 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
-		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version an trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
+		% Do the patching of endlinechar and tikzpicture here, as tikzpicture should not be changed if not called via the new \cmd{\includegraphics} command.
 %    \begin{macrocode}
-		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
-		\endlinechar=-1%
+		\tikzscale@FixEndLine
 %    \end{macrocode}
 		% Find the exact file name, as the ending and the path could be omitted.
 %    \begin{macrocode}
@@ -720,6 +706,70 @@ and the derived files           tikzscale.ins,
 		}%
 	\endgroup
 }%
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@useEnhancedIncludegraphics}
+	% Replace the \cmd{\includegraphics} command by tikzscale's more generic command, to provide a consistent user interface.
+%    \begin{macrocode}
+\def\tikzscale@useEnhancedIncludegraphics{%
+	\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@FixEndLine}
+% tikzpicture environment gets redefined:
+% - without external library: only inside tikzscale (once)
+% - with external library: additionally, whenever \cmd{\externalenable} or \cmd{\externaldisable} is called (\cmd{\tikzpiture} and \cmd{\endtikzpicture})
+% Use cases to patch tikzpicture:
+% - to use tikzscale's includegraphics
+% - to restore end of line character
+% Constraints:
+% - The patches have to be applied at the beginning of \cmd{\tikzpicture} and the end of \cmd{\endtikzpicture}, as \cmd{\tikzpicture} might not be executed completely when using external, as then the content of the tizkpicture environment is not executed at all.
+% - The patches should not accumulate
+% - A group might make sense to have a local scope
+%    \begin{macrocode}
+\def\tikzscale@FixEndLine{%
+%    \end{macrocode}
+		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version a trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
+%    \begin{macrocode}
+		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
+		\endlinechar=-1%
+%    \end{macrocode}
+	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
+%    \begin{macrocode}
+	\pretocmd{\tikzpicture}{%
+		\tikzscale@restoreEndLineChar
+	}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+	%
+	\apptocmd{\endtikzpicture}{%
+		\endlinechar=-1%
+	}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+}%
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@patchTikzpictureIncludegraphics}
+%    \begin{macrocode}
+\def\tikzscale@patchTikzpictureIncludegraphics{%
+	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Using \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture} does not work. The includegraphics commands really has to be deactivated here, as a tikzpicture including a PNG file might be called directly without calling includegraphics
+%    \begin{macrocode}
+	\pretocmd{\tikzpicture}{%
+		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
+	}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+	%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@patchEndtikzpictureIncludegraphics}
+%    \begin{macrocode}
+\def\tikzscale@patchEndtikzpictureIncludegraphics{%
+	\apptocmd{\endtikzpicture}{%
+		\LetLtxMacro{\includegraphics}{\tikzscale@includegraphics}%
+	}{}{\PackageError{tikzscale}{Patching endtikzpicture failed}}%
+}
 %    \end{macrocode}
 %\end{macro}
 %
