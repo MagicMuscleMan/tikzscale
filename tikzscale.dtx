@@ -411,6 +411,7 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Reported a bug when using plain old \LaTeX with an eps file, which lead to a fix.
 %             \item Reported another bug when using plain old \LaTeX, which lead to some rework to fully support \LaTeX without additional code.
+%             \item Reported a bug when using \cmd{\graphicspath}, which lead to a fix.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -573,8 +574,11 @@ and the derived files           tikzscale.ins,
 	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
 %    \begin{macrocode}
 	\ifdef{\currfiledir}{%
-% 		\graphicspath{{\currfiledir}{}\Ginput@path}%
-		\def\tikzscale@graphicspath{\currfiledir,{}}%
+		\ifdef{\Ginput@path}{%
+			\def\tikzscale@graphicspath{\Ginput@path,\currfiledir,{}}%
+		}{%
+			\def\tikzscale@graphicspath{\currfiledir,{}}%
+		}%
 	}{%
 		\def\tikzscale@graphicspath{{}}%
 	}%
