@@ -413,6 +413,7 @@ and the derived files           tikzscale.ins,
 %             \item Reported a bug when using plain old \LaTeX with an eps file, which lead to a fix.
 %             \item Reported another bug when using plain old \LaTeX, which lead to some rework to fully support \LaTeX without additional code.
 %             \item Reported a bug when using \cmd{\graphicspath}, which lead to a fix.
+%             \item Reported the bug when using \cmd{\graphicspath} again, which lead to correct fix even if currfile is not used.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -571,18 +572,6 @@ and the derived files           tikzscale.ins,
 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF}%
 % 	\def\tikzscale@tikzFileExtensions{.tikz,.TIKZ,.TikZ,.pgf,.PGF,.tex,.TEX}%
 	\DeclareGraphicsExtensions{\tikzscale@tikzFileExtensions,\Gin@extensions}%
-%    \end{macrocode}
-	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
-%    \begin{macrocode}
-	\ifdef{\currfiledir}{%
-		\ifdef{\Ginput@path}{%
-			\def\tikzscale@graphicspath{\Ginput@path,\currfiledir,{}}%
-		}{%
-			\def\tikzscale@graphicspath{\currfiledir,{}}%
-		}%
-	}{%
-		\def\tikzscale@graphicspath{{}}%
-	}%
 %    \end{macrocode}
 %    Save the \cmd{\includegraphics} \href{ftp://ftp.tu-chemnitz.de/pub/tex/macros/latex/required/graphics/grfguide.pdf}{command}.
 %    \begin{macrocode}
@@ -801,6 +790,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\eforcsvlist{\tikzscale@checkExtension}{{},\Gin@extensions}%
 	}%
+%    \end{macrocode}
+	% Set the graphics path, to also find graphics in the last (current) input directory or in completely separate paths. Set it here to get updates if the user uses the \cmd{graphicspath} command inside of the document body.
+%    \begin{macrocode}
+	\tikzscale@setGraphicsPath
 	\eforcsvlist{\tikzscale@checkDirectory}{\tikzscale@graphicspath}%
 %    \end{macrocode}
 	% If no file has been found, return the given file name, as includegraphics should try its best.
@@ -812,7 +805,28 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-% \begin{macro}{\tikzscale@findExactFileName}
+% \begin{macro}{\tikzscale@setGraphicsPath}
+	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@setGraphicsPath}{}{%
+	\ifdef{\currfiledir}{%
+		\ifdef{\Ginput@path}{%
+			\def\tikzscale@graphicspath{\currfiledir,\Ginput@path,{}}%
+		}{%
+			\def\tikzscale@graphicspath{\currfiledir,{}}%
+		}%
+	}{%
+		\ifdef{\Ginput@path}{%
+			\def\tikzscale@graphicspath{\Ginput@path,{}}%
+		}{%
+			\def\tikzscale@graphicspath{{}}%
+		}%
+	}%
+}%
+%    \end{macrocode}
+%\end{macro}
+%
+% \begin{macro}{\tikzscale@isTikzFile}
 % The first argument is the macro name (without backslash), which gets defined if the file is a tikzfile.
 % The second argument is the file name.
 %    \begin{macrocode}
