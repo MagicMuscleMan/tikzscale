@@ -413,7 +413,7 @@ and the derived files           tikzscale.ins,
 %             \item Reported a bug when using plain old \LaTeX with an eps file, which lead to a fix.
 %             \item Reported another bug when using plain old \LaTeX, which lead to some rework to fully support \LaTeX without additional code.
 %             \item Reported a bug when using \cmd{\graphicspath}, which lead to a fix.
-%             \item Reported the bug when using \cmd{\graphicspath} again, which lead to correct fix even if currfile is not used.
+%             \item Reported the bug when using \cmd{\graphicspath} again, which lead to a correct fix even if currfile is not used.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -629,7 +629,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\ifExternalizationLoaded{%
 %    \end{macrocode}
-%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead. The idea is to get the tikzscale's includegraphics command being called and then redefine tikzpicture and do the rest of the work there.
+%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead. The idea is to get the tikzscale's includegraphics command being called and then redefine tikzpicture and do the rest of the work there. Do the patching always when \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called, as the patching should also be done when \cmd{\includegraphics} is not used, but \cmd{\tikzpicture} is called directly.
 %    \begin{macrocode}
 		\apptocmd{\tikzexternaldisable}{%
 			\tikzscale@useEnhancedIncludegraphics
@@ -733,9 +733,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
 %    \begin{macrocode}
-	\pretocmd{\tikzpicture}{%
-		\tikzscale@restoreEndLineChar
-	}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+	\tikzscale@addRestoreEndLineCharToTikzpicture
 	%
 	\apptocmd{\endtikzpicture}{%
 		\endlinechar=-1%
@@ -744,10 +742,20 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\tikzscale@addRestoreEndLineCharToTikzpicture}
+%    \begin{macrocode}
+\def\tikzscale@addRestoreEndLineCharToTikzpicture{%
+	\pretocmd{\tikzpicture}{%
+		\tikzscale@restoreEndLineChar
+	}{}{\PackageError{tikzscale}{Patching tikzpicture failed}}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}{\tikzscale@patchTikzpictureIncludegraphics}
 %    \begin{macrocode}
 \def\tikzscale@patchTikzpictureIncludegraphics{%
-	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Using \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture} does not work. The includegraphics commands really has to be deactivated here, as a tikzpicture including a PNG file might be called directly without calling includegraphics
+	% Deactivate the new includegraphics command inside of tikzpictures, as a tikzpicture might load a PNG graphic or something and this should not be scaled by tikzscale but by TikZ or PGFPlots. Besides, the current implementation is not reentrant, so its not a good idea to call the macro recursively. The deactivation must be inside of tikzpicture, as a tikzpicture can be loaded without using includegraphics, thus it cannot be done there. Using \cmd{\apptocmd} to do a local definition inside of the group started by \cmd{\tikzpicture} does not work. The \cmd{\includegraphics} command really has to be deactivated here, as a tikzpicture including a PNG file might be called directly without calling includegraphics.
 %    \begin{macrocode}
 	\pretocmd{\tikzpicture}{%
 		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
@@ -1325,6 +1333,12 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@conditionalDisableExternalization}{}{%
 	\tikzexternaldisable
+%    \end{macrocode}
+	% Restore the endlinechar here and not in the general \cmd{\tikzexternaldisable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
+%    \begin{macrocode}
+	\ifExternalizationLoaded{%
+		\tikzscale@addRestoreEndLineCharToTikzpicture
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1343,6 +1357,12 @@ and the derived files           tikzscale.ins,
 % 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
 % 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
 	\tikzexternalenable
+%    \end{macrocode}
+	% Restore the endlinechar here and not in the general \cmd{\tikzexternalenable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
+%    \begin{macrocode}
+	\ifExternalizationLoaded{%
+		\tikzscale@addRestoreEndLineCharToTikzpicture
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
