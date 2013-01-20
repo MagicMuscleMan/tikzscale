@@ -1,6 +1,7 @@
 \begin{tikzpicture}
 	\begin{axis}[
-		ybar interval
+		ybar interval,
+		title={endlinechar: \the\endlinechar~(should be 13)}
 	]
 	% a data file containing 8000 normally distributed
 	% random numbers of mean 0 and variance 1
