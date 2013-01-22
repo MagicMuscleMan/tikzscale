@@ -418,6 +418,10 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Reported that the beamer class is incompatible with tikzscale, which lead to a change in tikzscale to fix this incompatibility.
 %         \end{itemize}
+%     \item Klaus Pribil
+%         \begin{itemize}
+%             \item Reported an incompatibility with the pdfpages package, which lead to a fix in tikzscale.
+%         \end{itemize}
 % \end{itemize}
 %
 %
@@ -782,17 +786,20 @@ and the derived files           tikzscale.ins,
 % Find the exact file name of a graphic file by testing several paths and file endings if there are degrees of freedom. The file name is saved in the command sequence name given by the first argument.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@findExactFileName}{mm}{%
-	%    \end{macrocode}
+%    \end{macrocode}
 	% Delete the return variable if it already exists to allow checking if a file has been found.
-	%    \begin{macrocode}
+%    \begin{macrocode}
 	\csundef{#1}%
-	%    \end{macrocode}
+%    \end{macrocode}
 	% Create a helper function used inside the file ending evaluation.
-	%    \begin{macrocode}
+%    \begin{macrocode}
 	\def\tikzscale@checkDirectory##1{%
 		\def\tikzscale@checkExtension####1{%
 			\IfFileExists{##1#2####1}{%
-				\csdef{#1}{##1#2####1}%
+%    \end{macrocode}
+				% Use \cmd{\csedef} instead of \cmd{\csdef} here, to be completely sure to only have a string left. This avoids problems when using tikzscale together with the pdfpages package and should generally be the right thing.
+%    \begin{macrocode}
+				\csedef{#1}{##1#2####1}%
 				\listbreak
 			}{}%
 		}%
