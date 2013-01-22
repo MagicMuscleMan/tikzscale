@@ -372,7 +372,6 @@ and the derived files           tikzscale.ins,
 %
 % \section{Further Ideas}
 % \begin{itemize}
-%	\item The \cmd{\tikzscale@trim} commands generates a warning in the figure log files that "Scaling of linewidth.tikz was only (tikzscale) accurate to 202.83331pt on input line 30." and other warnings, but they do not seem to have any influence.
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -414,6 +413,10 @@ and the derived files           tikzscale.ins,
 %             \item Reported another bug when using plain old \LaTeX, which lead to some rework to fully support \LaTeX without additional code.
 %             \item Reported a bug when using \cmd{\graphicspath}, which lead to a fix.
 %             \item Reported the bug when using \cmd{\graphicspath} again, which lead to a correct fix even if currfile is not used.
+%         \end{itemize}
+%     \item Andreas Tharang
+%         \begin{itemize}
+%             \item Reported that the beamer class is incompatible with tikzscale, which lead to a change in tikzscale to fix this incompatibility.
 %         \end{itemize}
 % \end{itemize}
 %
@@ -726,10 +729,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \def\tikzscale@FixEndLine{%
 %    \end{macrocode}
-		% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version a trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
+	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version a trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
 %    \begin{macrocode}
-		\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
-		\endlinechar=-1%
+	\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
+	\endlinechar=-1%
 %    \end{macrocode}
 	% Restore the \cmd{\endlinechar} during the execution of the tikzpicture environment. This is necessary, for example, if data is read from a table and the data entries are separated by newline characters. Not restoring the \cmd{\endlinechar} would \href{http://tex.stackexchange.com/q/89053/7323}{distort the data}. Use \cmd{\apptocmd} to call the command inside the group opened by tikzpicture. Thus, nothing has to be done in \cmd{\endtikzpicture} regarding \cmd{\endlinechar}.
 %    \begin{macrocode}
@@ -882,9 +885,10 @@ and the derived files           tikzscale.ins,
 % \cmd{\includegraphics}[width=\cmd{\linewidth}]{fileWithoutEnding}
 % write
 % \cmd{\tikzscale@includetikz}[width=\cmd{\linewidth}]{fileWithoutEnding}
-% If only one of width or height are given, scale proportionally to fulfill the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported.
+% If only one of width or height are given, scale proportionally to fulfill the requirement. If both are given, scale non-proportionally to required width and height. Therefore, for normal tikzpictures only give either width or height, as the aspect ratio is already determined by the coordinate limits in the tikzpicture, but give width and height for PGFPlots, as the aspect ratio is unknown for these plots. \cmd{\NewEnviron} could be used to handle something like verbose in a tikzpicture, but at the moment, this is unsupported. The used code is the same as the uncommented code, but also \href{http://tex.stackexchange.com/q/94781/7323}{compatible with class beamer}.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
+% \NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
+\newcommand{\tikzscale@includetikz}[2][]{%
 %    \end{macrocode}
 	% Check the keys here already, as they are needed both to see if already externalized files fulfill their requirements and to handle unexternalized files.
 %    \begin{macrocode}
