@@ -371,6 +371,9 @@ and the derived files           tikzscale.ins,
 % \subsection{Externalization library}
 % TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge.
 %
+% \subsection{Fitting library}
+% Due to a \href{http://sourceforge.net/tracker/index.php?func=detail&aid=2991312&group_id=142562&atid=752792}{known bug in the fitting library}, nodes with a \texttt{fit} option also need a \texttt{transform shape} option in order to be scalable. If they are not scalable, they normally do not contain the nodes as specified when tikzscale is used.
+%
 % \section{Further Ideas}
 % \begin{itemize}
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
@@ -418,6 +421,7 @@ and the derived files           tikzscale.ins,
 %     \item Andreas Tharang
 %         \begin{itemize}
 %             \item Reported that the beamer class is incompatible with tikzscale, which lead to a change in tikzscale to fix this incompatibility.
+%             \item Reported that the fitting library is incompatible with tikzscale due to a bug in the fitting library, which lead to a note in the documentation.
 %         \end{itemize}
 %     \item Klaus Pribil
 %         \begin{itemize}
