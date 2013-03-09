@@ -427,6 +427,10 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Reported an incompatibility with the pdfpages package, which lead to a fix in tikzscale.
 %         \end{itemize}
+%     \item Christoph Schmidpeter
+%         \begin{itemize}
+%             \item Reported a problem when accidently adding a superfluous space into the graphics path, which lead to a detection and fix of that case in tikzscale.
+%         \end{itemize}
 % \end{itemize}
 %
 %
@@ -501,6 +505,20 @@ and the derived files           tikzscale.ins,
 \def\tikzscale@trim#1{%
 	\ignorespaces#1\unskip
 }%
+%    \end{macrocode}
+%\end{macro}
+%
+% \begin{macro}{\tikzscale@trimMacro}
+	% A possible present leading or trailing space in the macro's content is removed from the macro.
+%    \begin{macrocode}
+\def\tikzscale@trimMacro#1{%
+	\expandafter\IfBeginWith\expandafter{#1}{ }{%
+		\expandafter\StrGobbleLeft\expandafter{#1}{1}[#1]%
+	}{}%
+	\expandafter\IfEndWith\expandafter{#1}{ }{%
+		\expandafter\StrGobbleRight\expandafter{#1}{1}[#1]%
+	}{}%
+}
 %    \end{macrocode}
 %\end{macro}
 %
@@ -832,6 +850,12 @@ and the derived files           tikzscale.ins,
 	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@setGraphicsPath}{}{%
+%    \end{macrocode}
+	% Remove possible leading or trailing spaces in the graphics path, as they lead to ugly string output before printing the graphic. Inserting such a space in the graphics path is a user's error, but it can happen easily as not all users are aware of TeX's newline issues. Fix the original path variable and not only tikzscale's variable, as this seems to be a general problem.
+%    \begin{macrocode}
+	\ifdef{\Ginput@path}{%
+		\tikzscale@trimMacro{\Ginput@path}%
+	}{}%
 	\ifdef{\currfiledir}{%
 		\ifdef{\Ginput@path}{%
 			\def\tikzscale@graphicspath{\currfiledir,\Ginput@path,{}}%
