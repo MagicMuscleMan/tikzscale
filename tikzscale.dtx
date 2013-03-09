@@ -431,6 +431,10 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Reported a problem when accidently adding a superfluous space into the graphics path, which lead to a detection and fix of that case in tikzscale.
 %         \end{itemize}
+%     \item Jose Hissa Ferreira
+%         \begin{itemize}
+%             \item Reported a bug when using a graphics path with multiple path entries, which lead to a fix.
+%         \end{itemize}
 % \end{itemize}
 %
 %
@@ -490,11 +494,54 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\eforcsvlist}
-% These is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forcsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
+% This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forcsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
 %    \begin{macrocode}
 \def\eforcsvlist#1#2{%
 	\edef\tikzscale@eforcsvlist{#2}%
 	\expandafter\forcsvlist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@eforcsvlist}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\forgrouplist}
+% This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forcsvlist} but uses TeX groups to separate elements instead of a comma separated list.
+%    \begin{macrocode}
+\def\forgrouplist#1#2{%
+%    \end{macrocode}
+	% Open a group so that \cmd{\listbreak} can be redefined without interfering with the definition for \cmd{\forcsvlist}. Additionally, this way \cmd{\breakFor} does not have to be deleted. Activating the \cmd{\begingroup} command, leads to errors.
+%    \begin{macrocode}
+% 	\begingroup
+% 		\def\listbreak{\def\breakFor{}}%
+		\tikzscale@forGroupListElement{#1}#2\mylistend%
+% 	\endgroup
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@forGroupListElement}
+%    \begin{macrocode}
+\NewDocumentCommand{\tikzscale@forGroupListElement}{mgu{\mylistend}}{%
+%    \end{macrocode}
+	% Only do list processing if \cmd{\listbreak} has not been called.
+%    \begin{macrocode}
+	\ifundef{\breakFor}{%
+		\IfValueTF{#2}{%
+			#1{#2}%
+			\tikzscale@forGroupListElement{#1}#3\mylistend%
+		}{%
+			#1{#3}%
+		}%
+	}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\eforgrouplist}
+% This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\forgrouplist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
+%    \begin{macrocode}
+\def\eforgrouplist#1#2{%
+	\edef\tikzscale@grouplist{#2}%
+	\expandafter\forgrouplist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@grouplist}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -835,7 +882,7 @@ and the derived files           tikzscale.ins,
 	% Set the graphics path, to also find graphics in the last (current) input directory or in completely separate paths. Set it here to get updates if the user uses the \cmd{graphicspath} command inside of the document body.
 %    \begin{macrocode}
 	\tikzscale@setGraphicsPath
-	\eforcsvlist{\tikzscale@checkDirectory}{\tikzscale@graphicspath}%
+	\eforgrouplist{\tikzscale@checkDirectory}{\tikzscale@graphicspath}%
 %    \end{macrocode}
 	% If no file has been found, return the given file name, as includegraphics should try its best.
 %    \begin{macrocode}
@@ -858,13 +905,13 @@ and the derived files           tikzscale.ins,
 	}{}%
 	\ifdef{\currfiledir}{%
 		\ifdef{\Ginput@path}{%
-			\def\tikzscale@graphicspath{\currfiledir,\Ginput@path,{}}%
+			\def\tikzscale@graphicspath{{\currfiledir}\Ginput@path{}}%
 		}{%
-			\def\tikzscale@graphicspath{\currfiledir,{}}%
+			\def\tikzscale@graphicspath{{\currfiledir}{}}%
 		}%
 	}{%
 		\ifdef{\Ginput@path}{%
-			\def\tikzscale@graphicspath{\Ginput@path,{}}%
+			\def\tikzscale@graphicspath{\Ginput@path{}}%
 		}{%
 			\def\tikzscale@graphicspath{{}}%
 		}%
