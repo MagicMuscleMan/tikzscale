@@ -1,0 +1,4 @@
+\begin{tikzpicture}
+	\draw (0,0) rectangle (5,5);
+	\only<2>{\draw (0,0) -- ++(5,5) -- ++(-2.5, 2.5) -- ++(-2.5, -2.5) -- (5,0);}
+\end{tikzpicture}

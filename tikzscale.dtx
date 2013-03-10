@@ -422,6 +422,7 @@ and the derived files           tikzscale.ins,
 %         \begin{itemize}
 %             \item Reported that the beamer class is incompatible with tikzscale, which lead to a change in tikzscale to fix this incompatibility.
 %             \item Reported that the fitting library is incompatible with tikzscale due to a bug in the fitting library, which lead to a note in the documentation.
+%             \item Created tests to improve the compatibility between beamer and tikzscale, which lead to support of Beamer's \cmd{\pause} command.
 %         \end{itemize}
 %     \item Klaus Pribil
 %         \begin{itemize}
@@ -1437,6 +1438,13 @@ and the derived files           tikzscale.ins,
 	\ifExternalizationLoaded{%
 		\tikzscale@addRestoreEndLineCharToTikzpicture
 	}{}%
+%    \end{macrocode}
+	% The pause command defined by the Beamer class creates additional slides when called multiple times due to tikzscale's scaling. Thus, deactivate it during the scaling tests, if it is defined.
+%    \begin{macrocode}
+	\ifdef{\pause}{%
+		\LetLtxMacro{\tikzscale@oldpause}{\pause}%
+		\RenewDocumentCommand{\pause}{o}{}%
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1460,6 +1468,12 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\ifExternalizationLoaded{%
 		\tikzscale@addRestoreEndLineCharToTikzpicture
+	}{}%
+%    \end{macrocode}
+	% Reactivate Beamer's pause command if defined.
+%    \begin{macrocode}
+	\ifdef{\pause}{%
+		\LetLtxMacro{\pause}{\tikzscale@oldpause}%
 	}{}%
 }
 %    \end{macrocode}

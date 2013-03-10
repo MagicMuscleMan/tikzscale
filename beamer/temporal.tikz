@@ -1,0 +1,5 @@
+\begin{tikzpicture}
+	\draw (0,0) rectangle (5,5);
+	\node at (2.5,2.5) {\temporal<2>{before}{now}{after}};
+	\onslide<3> {};	% just a small trick to create 3 subframes
+\end{tikzpicture}
