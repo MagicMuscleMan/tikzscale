@@ -508,26 +508,28 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \def\forgrouplist#1#2{%
 %    \end{macrocode}
-	% Open a group so that \cmd{\listbreak} can be redefined without interfering with the definition for \cmd{\forcsvlist}. Additionally, this way \cmd{\breakFor} does not have to be deleted. Activating the \cmd{\begingroup} command, leads to errors.
+	% Use \cmd{\grouplistbreak} instead of \cmd{\forcsvlist}'s \cmd{\listbreak}, because the function given in the first argument can contain a call to \forcsvlist. In this case \cmd{\listbreak} is executed, although no break has been called, which lead to an error in the program, if \cmd{\listbreak} were used.
 %    \begin{macrocode}
-% 	\begingroup
-% 		\def\listbreak{\def\breakFor{}}%
-		\tikzscale@forGroupListElement{#1}#2\mylistend%
-% 	\endgroup
+	\def\grouplistbreak{\def\breakFor{}}%
+	\tikzscale@forGroupListElement{#1}#2\tikzscale@endList%
+%    \end{macrocode}
+	% Delete \cmd{\breakFor} in case it has been set.
+%    \begin{macrocode}
+	\undef\breakFor
 }
 %    \end{macrocode}
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@forGroupListElement}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@forGroupListElement}{mgu{\mylistend}}{%
+\NewDocumentCommand{\tikzscale@forGroupListElement}{mgu{\tikzscale@endList}}{%
 %    \end{macrocode}
 	% Only do list processing if \cmd{\listbreak} has not been called.
 %    \begin{macrocode}
 	\ifundef{\breakFor}{%
 		\IfValueTF{#2}{%
 			#1{#2}%
-			\tikzscale@forGroupListElement{#1}#3\mylistend%
+			\tikzscale@forGroupListElement{#1}#3\tikzscale@endList%
 		}{%
 			#1{#3}%
 		}%
@@ -870,6 +872,9 @@ and the derived files           tikzscale.ins,
 				% Use \cmd{\csedef} instead of \cmd{\csdef} here, to be completely sure to only have a string left. This avoids problems when using tikzscale together with the pdfpages package and should generally be the right thing.
 %    \begin{macrocode}
 				\csedef{#1}{##1#2####1}%
+%    \end{macrocode}
+				% Break the inner (\cmd{\forcsvlist}) loop over file extensions.
+%    \begin{macrocode}
 				\listbreak
 			}{}%
 		}%
@@ -877,6 +882,12 @@ and the derived files           tikzscale.ins,
 	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{http://tex.stackexchange.com/a/45502}{current content} set by \cmd{\DeclareGraphicsExtensions}.
 %    \begin{macrocode}
 		\eforcsvlist{\tikzscale@checkExtension}{{},\Gin@extensions}%
+		\ifcsdef{#1}{%
+%    \end{macrocode}
+			% Break the outer (\cmd{\forgrouplist}) loop over directories.
+%    \begin{macrocode}
+			\grouplistbreak
+		}{}%
 	}%
 %    \end{macrocode}
 	% Set the graphics path, to also find graphics in the last (current) input directory or in completely separate paths. Set it here to get updates if the user uses the \cmd{graphicspath} command inside of the document body.
@@ -894,7 +905,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 % \begin{macro}{\tikzscale@setGraphicsPath}
-	% The \cmd{graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
+	% The \cmd{\graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@setGraphicsPath}{}{%
 %    \end{macrocode}
