@@ -362,12 +362,15 @@ and the derived files           tikzscale.ins,
 % If both tikzscale and currfile are loaded, the limitation is fixed, so that both \cmd{\includegraphics} commands succeed. Note, that this functionality supports the traditional graphic formats, too, and is also available without loading the TikZ or PGFPlots packages, although the package's name might imply otherwise.
 %
 % \section{Compatibility}
-% Using both the externalization library and tikzscale seems to have a race condition when a makefile is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs. For $X = 1$, obviously, no race condition could be observed. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
-%
-% Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ or PGFPlots.
 %
 % \subsection{Load Order}
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
+%
+% Using both the externalization library and tikzscale seems to have a race condition when a makefile is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs. For $X = 1$, obviously, no race condition could be observed. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
+%
+% Using \cmd{\tikzexternalenable} or \cmd{\tikzexternaldisable} inside of a tikzpicture leads to undefined behaviour when using tikzscale. It's not clear, what the correct behaviour should be and what the externalization library does withouth tikzscale.
+%
+% Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ or PGFPlots.
 %
 % \subsection{Externalization library}
 % TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge.
@@ -623,24 +626,24 @@ and the derived files           tikzscale.ins,
 %\begin{macro}
 	% The check \cmd{\tikzifexternalizehasbeencalled} from file tikzexternalshared.code.tex is not exactly what is needed in tikzscale, as it always stays true after it has been set by \cmd{\tikzexternalize}. Instead, add a check whether externalization is active and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all. The initial state of \cmd{\tikzscale@externalizationActive} is not trivially known, as an arbitrary combination and order of \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} commands could have been used before the end of the preamble. In the long run, tikzexternalshared.code.tex should offer that check. Until then, we can check whether \cmd{\tikz}=\cmd{\tikzexternal@origtikz} (i.e. externalization disabled) or \cmd{\tikz}=\cmd{\tikzexternal@tikz@replacement} (i.e. externalization enabled) holds (if neither of both holds, this indicates a problem, e.g. another package redefining the command). This is, of course, only needed if the externalization library has been loaded at all. Please note, the implementation of this check as a macro is possible, because tikzscale redefines tikzpicture, whereas the externalization library redefines tikz, so there is no conflict.
 %    \begin{macrocode}
-	\def\tikzscale@ifExternalizationActive#1#2{%
-		\ifExternalizationLoaded{%
-			\ifdefequal{\tikz}{\tikzexternal@tikz@replacement}{%
-				#1%
-			}{%
-				\ifdefequal{\tikz}{\tikzexternal@origtikz}{%
-				}{%
-					\PackageWarning{tikzscale}{Status of externalization is unknown, thus I assume it is deactivated.}%
-				}%
-%    \end{macrocode}
-				% It's important, that this code is below the above code, as the below code can change the meaning of \cmd{\tikz} through side effects.
-%    \begin{macrocode}
-				#2%
-			}%
+\def\tikzscale@ifExternalizationActive#1#2{%
+	\ifExternalizationLoaded{%
+		\ifdefequal{\tikz}{\tikzexternal@tikz@replacement}{%
+			#1%
 		}{%
+			\ifdefequal{\tikz}{\tikzexternal@origtikz}{%
+			}{%
+				\PackageWarning{tikzscale}{Status of externalization is unknown, thus I assume it is deactivated.}%
+			}%
+%    \end{macrocode}
+			% It's important, that this code is below the above code, as the below code can change the meaning of \cmd{\tikz} through side effects.
+%    \begin{macrocode}
 			#2%
 		}%
+	}{%
+		#2%
 	}%
+}%
 %    \end{macrocode}
 %\end{macro}
 %
@@ -687,10 +690,8 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
 %    \begin{macrocode}
-	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
-	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
-	\ProvideDocumentCommand{\tikzexternaldisable}{}{}%
-	\ProvideDocumentCommand{\tikzexternalenable}{}{}%
+% 	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
+% 	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
 %    \end{macrocode}
 %
 %    \begin{macrocode}
@@ -1015,18 +1016,22 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikzUnexternalized}{O{}m}{%
 	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
+% 		\PackageWarning{tikzscale}{no option given}
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
 %    \begin{macrocode}
 		\tikzscale@trim{\input{#2}}%
 	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
+% 		\PackageWarning{tikzscale}{width and height given}
 %    \end{macrocode}
 		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
 %    \begin{macrocode}
 		\tikzscale@resizePlotTo{#2}%
 	}{test {\ifdef{\requestedAxisRatio}}}{%
+% 		\PackageWarning{tikzscale}{axis ratio given}
 		\tikzscale@includeAxisRatio{#2}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
+% 		\PackageWarning{tikzscale}{width or height given}
 %    \end{macrocode}
 		% Use this test as a check if PGFPlots has been loaded.
 %    \begin{macrocode}
@@ -1037,6 +1042,7 @@ and the derived files           tikzscale.ins,
 			\def\requestedAxisRatio{1}%
 			\tikzscale@includeAxisRatio{#2}%
 		}{%
+% 			\PackageWarning{tikzscale}{no pgfplots loaded}
 %    \end{macrocode}
 			% If PGFPlots has not been loaded, it can only be a TikZPicture.
 %    \begin{macrocode}
@@ -1363,6 +1369,10 @@ and the derived files           tikzscale.ins,
 			}%
 			\tikzscale@ifSizeDifference{\sizeDifference-\tikzscale@oldSizeDifference}{%
 			}{%
+%    \end{macrocode}
+				% Restore the externalization state in order to have strict enable-disable-call-pairing.
+%    \begin{macrocode}
+				\tikzscale@conditionalEnableExternalization{\fileName}%
 				\tikzscale@includeNormalTikzpicture{#4}%
 				\gdef\tikzscale@alreadyIncluded{true}%
 				\breakforeach
@@ -1432,7 +1442,10 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@conditionalDisableExternalization}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@conditionalDisableExternalization}{}{%
-	\tikzexternaldisable
+	\tikzscale@ifExternalizationActive{%
+		\tikzexternaldisable
+		\def\tikzscale@externalizationWasDisabled{}%
+	}{}
 %    \end{macrocode}
 	% Restore the endlinechar here and not in the general \cmd{\tikzexternaldisable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
 %    \begin{macrocode}
@@ -1463,7 +1476,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 % 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
 % 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
-	\tikzexternalenable
+	\ifdef{\tikzscale@externalizationWasDisabled}{%
+		\tikzexternalenable
+		\undef\tikzscale@externalizationWasDisabled
+	}{}%
 %    \end{macrocode}
 	% Restore the endlinechar here and not in the general \cmd{\tikzexternalenable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
 %    \begin{macrocode}
