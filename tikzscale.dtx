@@ -94,7 +94,7 @@ and the derived files           tikzscale.ins,
 %</internal>
 %<*package>
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{tikzscale}[2013/03/10 v0.2.4 tikzscale LaTeX package]
+\ProvidesPackage{tikzscale}[2013/03/30 v0.2.5 tikzscale LaTeX package]
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
 \RequirePackage{pgfkeys}
@@ -191,6 +191,7 @@ and the derived files           tikzscale.ins,
 %\changes{v0.2.2}{2013/01/13}{Fully support plain (dvi) \LaTeX; mind graphicspath}
 %\changes{v0.2.3}{2013/01/23}{Fix graphicspath bug; fix endlinechar bug, improve compatibility with beamer}
 %\changes{v0.2.4}{2013/03/10}{Fix another graphicspath bug; support Beamer's \cmd{\pause} command}
+%\changes{v0.2.5}{2013/03/30}{Do not accidently activate externalization}
 % \section{Introduction}
 % When dealing with graphics, there are different scaling demands. For \emph{absolute} scaling, a width and/or height is given. Opposed to that, for relativ scaling, a horizontal and/or vertical scaling factor is needed. This package only is about absolute scaling of tikzpicture environments. The different absolute scaling demands and their solutions are shown in table \ref{scalingDemands}.
 % \begin{table}
