@@ -1446,7 +1446,7 @@ and the derived files           tikzscale.ins,
 	\tikzscale@ifExternalizationActive{%
 		\tikzexternaldisable
 		\def\tikzscale@externalizationWasDisabled{}%
-	}{}
+	}{}%
 %    \end{macrocode}
 	% Restore the endlinechar here and not in the general \cmd{\tikzexternaldisable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
 %    \begin{macrocode}
