@@ -1246,7 +1246,7 @@ and the derived files           tikzscale.ins,
 		\foreach \l in {1,...,\maxTestIterations}{%
 			\tikzscale@measureSize{\measuredIntermediate}{#1}{#2}%
 %    \end{macrocode}
-		% Optimize until the absolute difference is small enough, although the (relative) size ratios are used to calculate a new scaling factor.
+			% Optimize until the absolute difference is small enough, although the (relative) size ratios are used to calculate a new scaling factor.
 %    \begin{macrocode}
 			\tikzscale@ifSizeDifference{\measuredIntermediate-\requestedSize}{%
 %    \end{macrocode}
@@ -1260,7 +1260,7 @@ and the derived files           tikzscale.ins,
 			}%
 		}%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
+		% Externalize the graphic with the final size.
 %    \begin{macrocode}
 		\tikzscale@conditionalEnableExternalization{#3}%
 %    \end{macrocode}
@@ -1271,7 +1271,7 @@ and the derived files           tikzscale.ins,
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
 	}{%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
+		% Externalize the graphic with the final size.
 %    \begin{macrocode}
 		\tikzscale@conditionalEnableExternalization{#3}%
 		#2%
