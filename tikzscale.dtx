@@ -741,19 +741,28 @@ and the derived files           tikzscale.ins,
 			\tikzscale@externalend@storeshifts{#1}%
 			\ifpgfexternal@info
 %    \end{macrocode}
-				% The axis ratio can only be saved, if it has been specified. Thus, the existence of the variable in the dpth file indicates if the axis ratio has been given in the last run.
+				% Write the axis ratio into the dpth file into variable \cmd{\tikzscale@oldAxisRatio}. The existence of the variable in the dpth file indicates if the axis ratio has been given in the last run.
 %    \begin{macrocode}
-				\ifdef{\requestedAxisRatio}{%
-%    \end{macrocode}
-					% Write the axis ratio into the dpth file into variable \cmd{\tikzscale@oldAxisRatio} as in the macro \cmd{\pgf@externalend@storeshifts} from file pgfcoreexternal.code.tex.
-%    \begin{macrocode}
-					\immediate\write#1{\noexpand\pgfexternal@restore{\noexpand\def\noexpand\tikzscale@oldAxisRatio{\requestedAxisRatio}}}%
-				}{}%
+				\tikzscale@writeToDpth{#1}{\tikzscale@oldAxisRatio}{\requestedAxisRatio}%
 			\fi
 		}%
 	}{}%
 %    \end{macrocode}
 %    \begin{macrocode}
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@writeToDpth}
+% Write the value of the third argument, if it exists, into the dpth file (write handle in the first argument) of the current figure, accessible by the second argument. The second and the third argument must contain macro names (including the backslash).
+%    \begin{macrocode}
+\def\tikzscale@writeToDpth#1#2#3{%
+	\ifdef{#3}{%
+%    \end{macrocode}
+		% This is copied from the macro \cmd{\pgf@externalend@storeshifts} from file pgfcoreexternal.code.tex.
+%    \begin{macrocode}
+		\immediate\write#1{\noexpand\pgfexternal@restore{\noexpand\def\noexpand#2{#3}}}%
+	}{}%
 }
 %    \end{macrocode}
 %\end{macro}
