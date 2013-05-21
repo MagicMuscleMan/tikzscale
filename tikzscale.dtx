@@ -1030,7 +1030,7 @@ and the derived files           tikzscale.ins,
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
 		\tikzifexternalizingnext{%
-			\tikzscale@includetikzUnexternalized[#1]{#2}%
+			\tikzscale@includetikzUnexternalized{#2}%
 		}{%
 			\tikzscale@includetikzWithExternalization{#2}%
 		}%
@@ -1038,7 +1038,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Always draw and scale the graphic if externalization library has not been loaded or is deactivated.
 %    \begin{macrocode}
-		\tikzscale@includetikzUnexternalized[#1]{#2}%
+		\tikzscale@includetikzUnexternalized{#2}%
 	}%
 }
 %    \end{macrocode}
@@ -1046,22 +1046,22 @@ and the derived files           tikzscale.ins,
 %
 %\begin{macro}{\tikzscale@includetikzUnexternalized}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@includetikzUnexternalized}{O{}m}{%
+\def\tikzscale@includetikzUnexternalized#1{%
 	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
 		\tikzscale@debug{no option given}%
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
 %    \begin{macrocode}
-		\tikzscale@trim{\input{#2}}%
+		\tikzscale@trim{\input{#1}}%
 	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
 		\tikzscale@debug{width and height given}%
 %    \end{macrocode}
 		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
 %    \begin{macrocode}
-		\tikzscale@resizePlotTo{#2}%
+		\tikzscale@resizePlotTo{#1}%
 	}{test {\ifdef{\requestedAxisRatio}}}{%
 		\tikzscale@debug{axis ratio given}%
-		\tikzscale@includeAxisRatio{#2}%
+		\tikzscale@includeAxisRatio{#1}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
 		\tikzscale@debug{width or height given}%
 %    \end{macrocode}
@@ -1072,17 +1072,17 @@ and the derived files           tikzscale.ins,
 			% If only either width or height is given it can be a normal tikzpicture or a plot with axisratio=1. Let's guess that it is a plot with default axisratio. If the guess is wrong, the called function detects that scaling the plot does not work and automatically calls \cmd{\tikzscale@includeNormalTikzpicture}.
 %    \begin{macrocode}
 			\def\requestedAxisRatio{1}%
-			\tikzscale@includeAxisRatio{#2}%
+			\tikzscale@includeAxisRatio{#1}%
 		}{%
 			\tikzscale@debug{no pgfplots loaded}%
 %    \end{macrocode}
 			% If PGFPlots has not been loaded, it can only be a TikZPicture.
 %    \begin{macrocode}
-			\tikzscale@includeNormalTikzpicture{#2}%
+			\tikzscale@includeNormalTikzpicture{#1}%
 		}%
 	}{%
 		% Everything else results in an error.
-		\tikzscale@invalidKeyError{#2}%
+		\tikzscale@invalidKeyError{#1}%
 	}%
 }
 %    \end{macrocode}
