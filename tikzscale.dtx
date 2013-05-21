@@ -1030,6 +1030,7 @@ and the derived files           tikzscale.ins,
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
 		\tikzifexternalizingnext{%
+			\tikzscale@debug{Externalizing the file #2}%
 			\tikzscale@includetikzUnexternalized{#2}%
 		}{%
 			\tikzscale@includetikzWithExternalization{#2}%
@@ -1103,6 +1104,9 @@ and the derived files           tikzscale.ins,
 	\IfFileExists{\tikzscale@externalizationName.dpth}{%
 		\tikzscale@checkRequestedSizeChanges
 	}{}%
+%    \end{macrocode}
+	% If the size of the loaded file does not fit, it would be possible to regenerate the file. But this would lead to the same result again, if the file has not changed in the mean time. To change something, the new externalisation would need the result of the old externalization, but as the externalization is processed in a separate LaTeX process, it's non-trivial to push the information there.
+%    \begin{macrocode}
 	\tikzscale@trim{\input{#1}}%
 }
 %    \end{macrocode}
@@ -1120,6 +1124,9 @@ and the derived files           tikzscale.ins,
 				\tikzset{external/remake next}%
 				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference \MessageBreak (requestedWidth=\requestedWidth, pgfexternalwidth=\pgfexternalwidth)}%
 % 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{current file}%
+%    \end{macrocode}
+				% It would be possible to calculate a new size, if the old size did not fit, but this information would be needed to push into the externalization process, what is hard. The idea were requested = requested + measuredOld - fileSize.
+%    \begin{macrocode}
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
@@ -1223,6 +1230,7 @@ and the derived files           tikzscale.ins,
 % The first argument determines if a specific width or a specific height should be achieved by scaling.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@scaleTikzpictureTo}{mmm}{%
+	\tikzscale@debug{At beginning scale, requestedWidth=\requestedWidth}%
 %    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
