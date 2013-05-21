@@ -489,6 +489,18 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\ifedefequal}
+% \xcmd\ifedefequal{first expression}{second expression}{true}{false}
+% This is a general command, which might be useful for inclusion into the etoolbox package. It executes the true code if both expressions expand to the same and otherwise the false code. This test is often wanted, as the order of the arguments is not important and it does not matter if the user saves a value in another macro without expanding it.
+%    \begin{macrocode}
+\def\ifedefequal#1#2{%
+	\edef\etoolbox@ifedefequal@first{#1}%
+	\edef\etoolbox@ifedefequal@second{#2}%
+	\ifdefequal{\etoolbox@ifedefequal@first}{\etoolbox@ifedefequal@second}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}{\edocsvlist}
 % This is a general command, which might be useful for inclusion into the etoolbox package. It works similar to \cmd{\docsvlist} but expands its argument similar to \cmd{\def} vs.\ \cmd{\edef}, which is useful if the list is stored in a macro/variable.
 %    \begin{macrocode}
@@ -1380,7 +1392,7 @@ and the derived files           tikzscale.ins,
 		% Optimize if the absolute difference is too large.
 %    \begin{macrocode}
 		\tikzscale@ifSizeDifference{\sizeDifference}{%
-			\ifdefstring{\dimension}{\wd}{%
+			\tikzscale@ifIsWidth{\dimension}{%
 				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \sizeDifference}%
 				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
 			}{%
@@ -1420,7 +1432,16 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@measuredSize}
+%\begin{macro}{\tikzscale@ifIsWidth}
+% \xcmd\tikzscale@ifIsWidth{condition}{true}{false}
+%    \begin{macrocode}
+\def\tikzscale@ifIsWidth#1{%
+	\ifedefequal{#1}{\wd}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@measureSize}
 %    \begin{macrocode}
 \newsavebox{\tikzscale@measuredSize}
 %    \end{macrocode}
