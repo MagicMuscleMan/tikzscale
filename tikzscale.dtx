@@ -1260,15 +1260,15 @@ and the derived files           tikzscale.ins,
 			}%
 		}%
 %    \end{macrocode}
-		% Externalize the graphic with the final size.
-%    \begin{macrocode}
-		\tikzscale@conditionalEnableExternalization{#3}%
-%    \end{macrocode}
-		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+		 % Do a last measurement to be able to warn if the size does not fit good enough. This measurement has to be done before possibly reactivating the externalization, as measurements with activated externalization can lead to wrong measurement results (possibly due to calling \cmd{\shipout} inside of the measurement). The assumption is, that the real graphic size does not change if the externalization gets activated, which all tests seem to confirm.
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
-		\usebox{\tikzscale@measuredSize}%
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
+%    \end{macrocode}
+		% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+%    \begin{macrocode}
+		\tikzscale@conditionalEnableExternalization{#3}%
+		#2%
 	}{%
 %    \end{macrocode}
 		% Externalize the graphic with the final size.
@@ -1324,16 +1324,16 @@ and the derived files           tikzscale.ins,
 		}%
 	}%
 %    \end{macrocode}
-	% Externalize the graphic with the final size.
-%    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{\fileName}%
-%    \end{macrocode}
-	% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+	% Do a last measurement to be able to warn if the size does not fit good enough. This measurement has to be done before possibly reactivating the externalization, as measurements with activated externalization can lead to wrong measurement results (possibly due to calling \cmd{\shipout} inside of the measurement). The assumption is, that the real graphic size does not change if the externalization gets activated, which all tests seem to confirm.
 %    \begin{macrocode}
 	\sbox{\tikzscale@measuredSize}{\content}%
-	\usebox{\tikzscale@measuredSize}%
 	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{\fileName's width}%
 	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{\fileName's height}%
+%    \end{macrocode}
+	% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+%    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{\fileName}%
+	\content%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1397,15 +1397,15 @@ and the derived files           tikzscale.ins,
 		\global\undef\tikzscale@alreadyIncluded%
 	}{%
 %    \end{macrocode}
-		% Externalize the graphic with the final size.
-%    \begin{macrocode}
-		\tikzscale@conditionalEnableExternalization{\fileName}%
-%    \end{macrocode}
-		% Finally, include the picture. Do it via a new measurement to be able to warn if it does not fit good enough.
+		 % Do a last measurement to be able to warn if the size does not fit good enough. This measurement has to be done before possibly reactivating the externalization, as measurements with activated externalization can lead to wrong measurement results (possibly due to calling \cmd{\shipout} inside of the measurement). The assumption is, that the real graphic size does not change if the externalization gets activated, which all tests seem to confirm.
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{\dimension}{\content}%
-		\usebox{\tikzscale@measuredSize}%
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{\fileName}%
+%    \end{macrocode}
+		% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+%    \begin{macrocode}
+		\tikzscale@conditionalEnableExternalization{\fileName}%
+		\content%
 	}%
 }
 %    \end{macrocode}
