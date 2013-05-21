@@ -648,6 +648,16 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\tikzscale@debug}
+% Activate and deactivate debugging by commenting and uncommenting the folowing code.
+%    \begin{macrocode}
+% \def\tikzscale@debug#1{%
+% 	\PackageWarning{tikzscale}{#1}%
+% }
+\def\tikzscale@debug#1{}%
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}{\activatetikzscale}
 %    \begin{macrocode}
 \AtEndPreamble{%
@@ -1017,22 +1027,22 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikzUnexternalized}{O{}m}{%
 	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
-% 		\PackageWarning{tikzscale}{no option given}
+		\tikzscale@debug{no option given}%
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
 %    \begin{macrocode}
 		\tikzscale@trim{\input{#2}}%
 	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
-% 		\PackageWarning{tikzscale}{width and height given}
+		\tikzscale@debug{width and height given}%
 %    \end{macrocode}
 		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
 %    \begin{macrocode}
 		\tikzscale@resizePlotTo{#2}%
 	}{test {\ifdef{\requestedAxisRatio}}}{%
-% 		\PackageWarning{tikzscale}{axis ratio given}
+		\tikzscale@debug{axis ratio given}%
 		\tikzscale@includeAxisRatio{#2}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
-% 		\PackageWarning{tikzscale}{width or height given}
+		\tikzscale@debug{width or height given}%
 %    \end{macrocode}
 		% Use this test as a check if PGFPlots has been loaded.
 %    \begin{macrocode}
@@ -1043,7 +1053,7 @@ and the derived files           tikzscale.ins,
 			\def\requestedAxisRatio{1}%
 			\tikzscale@includeAxisRatio{#2}%
 		}{%
-% 			\PackageWarning{tikzscale}{no pgfplots loaded}
+			\tikzscale@debug{no pgfplots loaded}%
 %    \end{macrocode}
 			% If PGFPlots has not been loaded, it can only be a TikZPicture.
 %    \begin{macrocode}
@@ -1087,35 +1097,35 @@ and the derived files           tikzscale.ins,
 		\ifdef{\pgfexternalwidth}{%
 			\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference \MessageBreak (requestedWidth: \requestedWidth, pgfexternalwidth: \pgfexternalwidth)}%
+				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference \MessageBreak (requestedWidth=\requestedWidth, pgfexternalwidth=\pgfexternalwidth)}%
 % 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{current file}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
+			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
 		}%
 	}{}%
 	\ifdef{\requestedHeight}{%
 		\ifdef{\pgfexternalheight}{%
 			\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference \MessageBreak (requestedHeight: \requestedHeight, pgfexternalheight: \pgfexternalheight)}%
+				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference \MessageBreak (requestedHeight=\requestedHeight, pgfexternalheight=\pgfexternalheight)}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-% 			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
+			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
 		}%
 	}{}%
 	\ifdef{\requestedAxisRatio}{%
 		\ifdef{\tikzscale@oldAxisRatio}{%
 			\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 				\tikzset{external/remake next}%
-% 				\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference \MessageBreak (requestedAxisRatio: \requestedAxisRatio, oldAxisRatio: \tikzscale@oldAxisRatio)}%
+				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference \MessageBreak (requestedAxisRatio=\requestedAxisRatio, oldAxisRatio=\tikzscale@oldAxisRatio)}%
 			}{}%
 			\undef{\tikzscale@oldAxisRatio}%
 		}{%
 			\tikzset{external/remake next}%
-			\PackageWarning{tikzscale}{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
+			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
 		}%
 	}{}%
 }
@@ -1243,7 +1253,7 @@ and the derived files           tikzscale.ins,
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
 				\pgfmathsetmacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
-% 				\PackageWarning{tikzscale}{errorRatio \errorRatio\MessageBreak for #3}%
+				\tikzscale@debug{errorRatio=\errorRatio\MessageBreak for #3}%
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
 				\breakforeach%
