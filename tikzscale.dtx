@@ -1294,11 +1294,50 @@ and the derived files           tikzscale.ins,
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
 %    \end{macrocode}
-		% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+		% Reactivate externalization to prepare the figure to be really rendered.
 %    \begin{macrocode}
 		\tikzscale@conditionalEnableExternalization{#3}%
+%    \end{macrocode}
+		% Before externalizing the file, save the current externalization file name to be possibly used later. This code must be run after the reactivation of the externalization and before the rendering itself.
+%    \begin{macrocode}
+		\tikzscale@ifExternalizationActive{%
+			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+		}{}%
+%    \end{macrocode}
+		% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+%    \begin{macrocode}
 		#2%
+%    \end{macrocode}
+		% If the externalization is active, it might happen, that a figure was scaled correctly according to the request, but the externalized figure has a different size. The reason for that behaviour is unknown. The only chance we have is to calculate the error, rewind everything and try again with the compensated error.
+%    \begin{macrocode}
+		\tikzscale@ifExternalizationActive{%
+%    \end{macrocode}
+			% Read the size of the saved PDF file and save it on \cmd{\pgfexternalsize}.
+%    \begin{macrocode}
+			\pgfexternalreaddpth{\tikzscale@externalizationName}%
+			\tikzscale@ifIsWidth{#1}{%
+				\edef\pgfexternalsize{\pgfexternalwidth}%
+			}{%
+				\edef\pgfexternalsize{\pgfexternalheight}%
+			}%
+%    \end{macrocode}
+			% Save the \cmd{\requestedSize} from the user in \cmd{\originalRequestedSize}, as the former value has to be overwritten for the next try. Do not use \cmd{\def}, as that would later be expanded to the current and not to the original value.
+%    \begin{macrocode}
+			\ifundef{\originalRequestedSize}{%
+				\let\originalRequestedSize\requestedSize
+			}{}%
+			\tikzscale@debug{originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
+%    \end{macrocode}
+			% If a size difference is left, compensate it, decrease the counter and try the scaling again.
+%    \begin{macrocode}
+			\tikzscale@ifSizeDifference{\originalRequestedSize-\pgfexternalsize}{%
+				\pgfmathsetmacro{\requestedSize}{\requestedSize + \measuredFinal - \pgfexternalsize}%
+				\tikzscale@decreaseFigureCounter
+				\tikzscale@scaleTikzpictureTo{#1}{#2}{#3}%
+			}{}%
+		}{}%
 	}{%
+% 		\let\measuredFinal\measuredSecond
 %    \end{macrocode}
 		% Externalize the graphic with the final size.
 %    \begin{macrocode}
@@ -1306,6 +1345,36 @@ and the derived files           tikzscale.ins,
 		#2%
 	}%
 }
+%    \end{macrocode}
+%\end{macro}
+
+%\begin{macro}{\tikzscale@decreaseFigureCounter}
+% Decrease the externalization figure counter. This way the last externalized figure will be overwritten when the next figure is externalized. This is useful if the same figure should be externalized again. This code is a modified copy of \cmd{\tikzexternal@getnextfilename@advancecount} from file tikzexternalshared.code.tex.
+%    \begin{macrocode}
+\def\tikzscale@decreaseFigureCounter{%
+%    \end{macrocode}
+% 		Use a group, so that the used counter register is not changed outside of this macro. This is necessary, as the global figure counter is not saved in a counter as one might think, but in a macro, so it must be copied to a local counter in order to be easily modified.
+%    \begin{macrocode}
+	\begingroup
+%    \end{macrocode}
+		% Get the name of the macro holding the figure counter value.
+%    \begin{macrocode}
+		\edef\macroName{c@tikzext@no@\pgfkeysvalueof{/tikz/external/figure name}}%
+%    \end{macrocode}
+		% Use a TeX counter and store the figure counter value therein.
+%    \begin{macrocode}
+% 		\c@pgf@counta=\csname\macroName\endcsname\relax
+		\c@pgf@counta=\csuse{\macroName}\relax
+%    \end{macrocode}
+		% Decrease the value of the local counter.
+%    \begin{macrocode}
+		\advance\c@pgf@counta -1\relax
+%    \end{macrocode}
+		% Save the value of the local counter back to the global counter macro.
+%    \begin{macrocode}
+		\expandafter\xdef\csname\macroName\endcsname{\the\c@pgf@counta}%
+	\endgroup
+}%
 %    \end{macrocode}
 %\end{macro}
 %
