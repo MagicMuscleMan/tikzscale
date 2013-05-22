@@ -4,6 +4,7 @@
 \usepackage{tikzscale}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{tikz-3dplot}
 \usepackage{currfile}
 \usepackage{lmodern}
 % Use the package ifpdf to share one test document between pdflatex and latex
@@ -13,7 +14,7 @@
 
 \usetikzlibrary{external}
 \tikzexternalize
-% \tikzexternaldisable % activate this line and test without "shell-escape" and withouth \tikzexternalenable below
+% \tikzexternaldisable % activate this line and test without "shell-escape" and without \tikzexternalenable below
 % \tikzexternalize[mode=list and make]
 \ifpdf
 \else
@@ -87,7 +88,9 @@
 		\fi
 		\item Use includegraphics with a histogram of a normal distribution\\%
 			\includegraphics[width=\linewidth,height=0.5\linewidth]{histogramNormal}%
-		\item {Use \texttt{\textbackslash graphicspath} with superfluous space\graphicspath{{somefolder} }
+		\item {Use \texttt{\textbackslash graphicspath} with superfluous space\graphicspath{{somefolder} } (only defined locally for the current item)
 			\includegraphics{testRectangle.tikz}}%
+		\item Use a tikz-3Dplot, which is known to have a different size after externalization compared to the measurements without externalization and is thus rebuilt every time if the counter-measurements are not successful.\\%
+			\includegraphics[width=\linewidth]{3Dplot}
 	\end{itemize}
 \end{document}

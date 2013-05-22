@@ -1,0 +1,10 @@
+\tdplotsetmaincoords{77}{-8}%
+\begin{tikzpicture}[tdplot_main_coords]
+		x={(2 cm, 2 cm)},%
+		y={(2 cm, 2 cm)},%
+		z={(2 cm, 2 cm)}%
+	]%
+	\draw [->] (0,0,0) -- (1,0,0) node[below] {$x_1$};%
+	\draw [->] (0,0,0) -- (0,0,1) node[left] {$x_2$};%
+	\draw [->] (0,0,0) -- (0,1,0) node[left] {$x_3$};%
+\end{tikzpicture}%
