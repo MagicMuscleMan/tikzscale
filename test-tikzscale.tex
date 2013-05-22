@@ -14,8 +14,8 @@
 
 \usetikzlibrary{external}
 \tikzexternalize
-% \tikzexternaldisable % activate this line and test without "shell-escape" and without \tikzexternalenable below
 % \tikzexternalize[mode=list and make]
+% \tikzexternaldisable % activate this line and test without "shell-escape" and without \tikzexternalenable below
 \ifpdf
 \else
 	\tikzset{external/system call={latex \tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname "\image" "\texsource"; dvips -o "\image".ps "\image".dvi}}
