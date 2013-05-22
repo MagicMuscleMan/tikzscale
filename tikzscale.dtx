@@ -382,6 +382,7 @@ and the derived files           tikzscale.ins,
 % \section{Further Ideas}
 % \begin{itemize}
 %	\item With careful considerations, it should be possible to reduce the average number of needed figure renderings, which should speed-up runs with very complicated figures.
+%	\item Add the external file optimization loop to axis ratio and pgfplots, as well.
 %	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
 %	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
@@ -1294,61 +1295,68 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
 		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
-%    \end{macrocode}
-		% Reactivate externalization to prepare the figure to be really rendered.
-%    \begin{macrocode}
-		\tikzscale@conditionalEnableExternalization{#3}%
-%    \end{macrocode}
-		% Before externalizing the file, save the current externalization file name to be possibly used later. This code must be run after the reactivation of the externalization and before the rendering itself.
-%    \begin{macrocode}
-		\tikzscale@ifExternalizationActive{%
-			\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
-		}{}%
-%    \end{macrocode}
-		% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
-%    \begin{macrocode}
-		#2%
-%    \end{macrocode}
-		% If the externalization is active, it might happen, that a figure was scaled correctly according to the request, but the externalized figure has a different size. The reason for that behaviour is unknown. The only chance we have is to calculate the error, rewind everything and try again with the compensated error.
-%    \begin{macrocode}
-		\tikzscale@ifExternalizationActive{%
-%    \end{macrocode}
-			% Read the size of the saved PDF file and save it on \cmd{\pgfexternalsize}.
-%    \begin{macrocode}
-			\pgfexternalreaddpth{\tikzscale@externalizationName}%
-			\tikzscale@ifIsWidth{#1}{%
-				\edef\pgfexternalsize{\pgfexternalwidth}%
-			}{%
-				\edef\pgfexternalsize{\pgfexternalheight}%
-			}%
-%    \end{macrocode}
-			% Save the \cmd{\requestedSize} from the user in \cmd{\originalRequestedSize}, as the former value has to be overwritten for the next try. Do not use \cmd{\def}, as that would later be expanded to the current and not to the original value.
-%    \begin{macrocode}
-			\ifundef{\originalRequestedSize}{%
-				\let\originalRequestedSize\requestedSize
-			}{}%
-			\tikzscale@debug{originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
-%    \end{macrocode}
-			% If a size difference is left, compensate it, decrease the counter and try the scaling again.
-%    \begin{macrocode}
-			\tikzscale@ifSizeDifference{\originalRequestedSize-\pgfexternalsize}{%
-				\pgfmathsetmacro{\requestedSize}{\requestedSize + \measuredFinal - \pgfexternalsize}%
-				\tikzscale@decreaseFigureCounter
-				\tikzscale@scaleTikzpictureTo{#1}{#2}{#3}%
-			}{}%
-		}{}%
+		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredFinal}%
 	}{%
-% 		\let\measuredFinal\measuredSecond
-%    \end{macrocode}
-		% Externalize the graphic with the final size.
-%    \begin{macrocode}
-		\tikzscale@conditionalEnableExternalization{#3}%
-		#2%
+		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredSecond}%
 	}%
 }
 %    \end{macrocode}
 %\end{macro}
-
+%
+%\begin{macro}{\tikzscale@testGraphicFileForRetry}
+% The macro tests the size of the generated graphic file. If the size is not as the requested size, the optimization is redone with an adapted optimization criterion to compensate the error done in the last run.
+%
+% \xcmd\tikzscale@testGraphicFileForRetry{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}{last measurement}
+%
+%    \begin{macrocode}
+\def\tikzscale@testGraphicFileForRetry#1#2#3#4{%
+%    \end{macrocode}
+	% Reactivate externalization to prepare the figure to be really rendered.
+%    \begin{macrocode}
+	\tikzscale@conditionalEnableExternalization{#3}%
+%    \end{macrocode}
+	% Before externalizing the file, save the current externalization file name to be possibly used later. This code must be run after the reactivation of the externalization and before the rendering itself.
+%    \begin{macrocode}
+	\tikzscale@ifExternalizationActive{%
+		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+	}{}%
+%    \end{macrocode}
+	% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+%    \begin{macrocode}
+	#2%
+%    \end{macrocode}
+	% If the externalization is active, it might happen, that a figure was scaled correctly according to the request, but the externalized figure has a different size. The reason for that behaviour is unknown. The only chance we have is to calculate the error, rewind everything and try again with the compensated error.
+%    \begin{macrocode}
+	\tikzscale@ifExternalizationActive{%
+%    \end{macrocode}
+		% Read the size of the saved PDF file and save it on \cmd{\pgfexternalsize}.
+%    \begin{macrocode}
+		\pgfexternalreaddpth{\tikzscale@externalizationName}%
+		\tikzscale@ifIsWidth{#1}{%
+			\edef\pgfexternalsize{\pgfexternalwidth}%
+		}{%
+			\edef\pgfexternalsize{\pgfexternalheight}%
+		}%
+%    \end{macrocode}
+		% Save the \cmd{\requestedSize} from the user in \cmd{\originalRequestedSize}, as the former value has to be overwritten for the next try. Do not use \cmd{\def}, as that would later be expanded to the current and not to the original value.
+%    \begin{macrocode}
+		\ifundef{\originalRequestedSize}{%
+			\let\originalRequestedSize\requestedSize
+		}{}%
+		\tikzscale@debug{originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
+%    \end{macrocode}
+		% If a size difference is left, compensate it, decrease the counter and try the scaling again.
+%    \begin{macrocode}
+		\tikzscale@ifSizeDifference{\originalRequestedSize-\pgfexternalsize}{%
+			\pgfmathsetmacro{\requestedSize}{\requestedSize + #4 - \pgfexternalsize}%
+			\tikzscale@decreaseFigureCounter
+			\tikzscale@scaleTikzpictureTo{#1}{#2}{#3}%
+		}{}%
+	}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}{\tikzscale@decreaseFigureCounter}
 % Decrease the externalization figure counter. This way the last externalized figure will be overwritten when the next figure is externalized. This is useful if the same figure should be externalized again. This code is a modified copy of \cmd{\tikzexternal@getnextfilename@advancecount} from file tikzexternalshared.code.tex.
 %    \begin{macrocode}
