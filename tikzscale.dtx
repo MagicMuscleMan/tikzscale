@@ -1105,7 +1105,7 @@ and the derived files           tikzscale.ins,
 		\tikzscale@checkRequestedSizeChanges
 	}{}%
 %    \end{macrocode}
-	% The figure is either remade or the PDF is included with the following call. The former is correct if the file has been changed, the latter is correct if the last run was correct and nothing has changed since then. The only case left is if the figure has neither changed, nor is the exported size correct, as the file is then regenerated repeating the same error as last time. To change something, the new externalisation would need the result of the old externalization, but as the externalization is processed in a separate LaTeX process, it's non-trivial to push the information there.
+	% The figure is either remade or the PDF is included with the following call. The former is correct if the file has been changed, the latter is correct if the last run was correct and nothing has changed since then. The only case left is if the figure has neither changed, nor is the exported size correct, as the file is then regenerated repeating the same error as last time. To change something, the new externalisation would need the result of the old externalization, but as the externalization is processed in a separate LaTeX process, it's non-trivial to push the information there.
 %    \begin{macrocode}
 	\tikzscale@trim{\input{#1}}%
 }
