@@ -7,6 +7,8 @@
 \usepackage{tikz-3dplot}
 \usepackage{currfile}
 \usepackage{lmodern}
+% Use the package subcaption to test the subfigure command
+\usepackage{subcaption}
 % Use the package ifpdf to share one test document between pdflatex and latex
 \usepackage{ifpdf}
 % Load the MWE package, although its functionality is not needed. The loading highlights, that some graphics used below are part of the MWE package.
@@ -93,4 +95,18 @@
 		\item Use a tikz-3Dplot, which is known to have a different size after externalization compared to the measurements without externalization and is thus rebuilt every time if the counter-measurements are not successful.\\%
 			\includegraphics[width=\linewidth]{3Dplot}
 	\end{itemize}
+
+	\begin{figure}
+		\centering
+		\includegraphics{testRectangle}%
+		\caption{Use includegraphics inside a figure environment}
+	\end{figure}
+	\begin{figure}
+		\begin{subfigure}{\linewidth}
+			\centering
+			\includegraphics{testRectangle}%
+			\caption{Use includegraphics inside a subfigure environment}
+		\end{subfigure}
+	\end{figure}
+
 \end{document}
