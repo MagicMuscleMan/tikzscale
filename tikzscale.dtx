@@ -625,7 +625,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}
+%\begin{macro}{\IfNoValueOrSplitEmptyTF}
 % This command is from \href{http://tex.stackexchange.com/a/63248/7323}{Bruno Le Floch}.
 %    \begin{macrocode}
 \ExplSyntaxOn
@@ -637,9 +637,10 @@ and the derived files           tikzscale.ins,
 	}
 }
 \ExplSyntaxOff
+%    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}
+%\begin{macro}{\tikzscale@ifExternalizationActive}
 	% The check \cmd{\tikzifexternalizehasbeencalled} from file tikzexternalshared.code.tex is not exactly what is needed in tikzscale, as it always stays true after it has been set by \cmd{\tikzexternalize}. Instead, add a check whether externalization is active and set it to false if externalization has not been loaded for simplification. Thus, whether externalization is active can be checked without checking if it has been loaded at all. The initial state of \cmd{\tikzscale@externalizationActive} is not trivially known, as an arbitrary combination and order of \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} commands could have been used before the end of the preamble. In the long run, tikzexternalshared.code.tex should offer that check. Until then, we can check whether \cmd{\tikz}=\cmd{\tikzexternal@origtikz} (i.e. externalization disabled) or \cmd{\tikz}=\cmd{\tikzexternal@tikz@replacement} (i.e. externalization enabled) holds (if neither of both holds, this indicates a problem, e.g. another package redefining the command). This is, of course, only needed if the externalization library has been loaded at all. Please note, the implementation of this check as a macro is possible, because tikzscale redefines tikzpicture, whereas the externalization library redefines tikz, so there is no conflict.
 %    \begin{macrocode}
 \def\tikzscale@ifExternalizationActive#1#2{%
