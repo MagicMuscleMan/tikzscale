@@ -97,6 +97,7 @@ and the derived files           tikzscale.ins,
 \ProvidesPackage{tikzscale}[2013/05/22 v0.2.6 tikzscale LaTeX package]
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
+\RequirePackage{etextools}
 \RequirePackage{pgfkeys}
 \RequirePackage{xparse}
 \RequirePackage{letltxmacro}
@@ -509,7 +510,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \def\edocsvlist#1{%
 	\edef\tikzscale@edocsvlist{#1}%
-	\expandafter\docsvlist\expandafter{\tikzscale@edocsvlist}%
+	\expandnext{\docsvlist}{\tikzscale@edocsvlist}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -519,7 +520,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \def\eforcsvlist#1#2{%
 	\edef\tikzscale@eforcsvlist{#2}%
-	\expandafter\forcsvlist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@eforcsvlist}%
+	\expandnext{\forcsvlist{#1}}{\tikzscale@eforcsvlist}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -564,7 +565,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \def\eforgrouplist#1#2{%
 	\edef\tikzscale@grouplist{#2}%
-	\expandafter\forgrouplist\expandafter{\expandafter#1\expandafter}\expandafter{\tikzscale@grouplist}%
+	\expandnext{\forgrouplist{#1}}{\tikzscale@grouplist}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -582,11 +583,11 @@ and the derived files           tikzscale.ins,
 % A possible present leading or trailing space in the macro's content is removed from the macro.
 %    \begin{macrocode}
 \def\tikzscale@trimMacro#1{%
-	\expandafter\IfBeginWith\expandafter{#1}{ }{%
-		\expandafter\StrGobbleLeft\expandafter{#1}{1}[#1]%
+	\expandnext\IfBeginWith{#1}{ }{%
+		\expandnext\StrGobbleLeft{#1}{1}[#1]%
 	}{}%
-	\expandafter\IfEndWith\expandafter{#1}{ }{%
-		\expandafter\StrGobbleRight\expandafter{#1}{1}[#1]%
+	\expandnext\IfEndWith{#1}{ }{%
+		\expandnext\StrGobbleRight{#1}{1}[#1]%
 	}{}%
 }
 %    \end{macrocode}
@@ -796,28 +797,41 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
-		% Do the patching of endlinechar and tikzpicture here, as tikzpicture should not be changed if not called via the new \cmd{\includegraphics} command.
+		% Find the exact file name, as the ending and the path could have been omitted at the call and must be resolved.
 %    \begin{macrocode}
-		\tikzscale@fixEndLine
+		\tikzscale@resolveFileName{\tikzscale@fileName}{#2}%
 %    \end{macrocode}
-		% Find the exact file name, as the ending and the path could be omitted.
+		% Do everything else in another macro, which gets the resolved and expanded file name. This way, the expansion is necessary only once.
 %    \begin{macrocode}
-		\tikzscale@findExactFileName{tikzscale@fileName}{#2}%
+		\expandnext{\tikzscale@includeResolvedFileName{#1}}{\tikzscale@fileName}%
+	\endgroup
+}%
 %    \end{macrocode}
-		% Check if the found file is a TikZ file.
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@includeResolvedFileName}
+% Include the graphic with the optional arguments in argument one and the fully expanded and resolved file name in the second argument.
 %    \begin{macrocode}
-		\tikzscale@isTikzFile{tikzscale@testTikzFile}{\tikzscale@fileName}%
-		\ifcsdef{tikzscale@testTikzFile}{%
-			\tikzscale@includetikz[#1]{\tikzscale@fileName}%
-		}{%
+\def\tikzscale@includeResolvedFileName#1#2{%
+%    \end{macrocode}
+	% Do the patching of endlinechar and tikzpicture here, as tikzpicture should not be changed if not called via the new \cmd{\includegraphics} command.
+	% TODO: Wouldn't it be better to call fixEndLine only if the argument really is a TikZ file? Then it would not be necessary to restoreEndLineChar if the argument is no TikZ file. Or would that be problematic for includegraphics calls inside of tikzpictures?
+%    \begin{macrocode}
+	\tikzscale@fixEndLine
+%    \end{macrocode}
+	% Check if the found file is a TikZ file.
+%    \begin{macrocode}
+	\tikzscale@isTikzFile{tikzscale@testTikzFile}{#2}%
+	\ifcsdef{tikzscale@testTikzFile}{%
+		\tikzscale@includetikz[#1]{#2}%
+	}{%
 %    \end{macrocode}
 		% Restore \cmd{\endlinechar} before calling code from other packages. This is not only cleaner, but really avoids an error when using the plain old latex (with dvi output) with an eps graphic.
 %    \begin{macrocode}
-			\tikzscale@restoreEndLineChar
-			\tikzscale@oldincludegraphics[#1]{\tikzscale@fileName}%
-		}%
-	\endgroup
-}%
+		\tikzscale@restoreEndLineChar
+		\tikzscale@oldincludegraphics[#1]{#2}%
+	}%
+}
 %    \end{macrocode}
 %\end{macro}
 %
@@ -893,14 +907,14 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-% \begin{macro}{\tikzscale@findExactFileName}
-% Find the exact file name of a graphic file by testing several paths and file endings if there are degrees of freedom. The file name is saved in the command sequence name given by the first argument.
+% \begin{macro}{\tikzscale@resolveFileName}
+% Find the exact file name of a graphic file given in the second argument by testing several paths and file endings. The argument must be expandable. The file name is saved in the macro given in the first argument. The resolved file name is saved expanded in the macro, i.e. it can be fully expanded after only one expansion of the macro.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@findExactFileName}{mm}{%
+\NewDocumentCommand{\tikzscale@resolveFileName}{mm}{%
 %    \end{macrocode}
 	% Delete the return variable if it already exists to allow checking if a file has been found.
 %    \begin{macrocode}
-	\csundef{#1}%
+	\undef#1%
 %    \end{macrocode}
 	% Create a helper function used inside the file ending evaluation.
 %    \begin{macrocode}
@@ -908,9 +922,9 @@ and the derived files           tikzscale.ins,
 		\def\tikzscale@checkExtension####1{%
 			\IfFileExists{##1#2####1}{%
 %    \end{macrocode}
-				% Use \cmd{\csedef} instead of \cmd{\csdef} here, to be completely sure to only have a string left. This avoids problems when using tikzscale together with the pdfpages package and should generally be the right thing.
+				% Use \cmd{\edef} instead of \cmd{\def} here, to be completely sure to only have a string left. This avoids problems when using tikzscale together with the pdfpages package and should generally be the right thing.
 %    \begin{macrocode}
-				\csedef{#1}{##1#2####1}%
+				\edef#1{##1#2####1}%
 %    \end{macrocode}
 				% Break the inner (\cmd{\forcsvlist}) loop over file extensions.
 %    \begin{macrocode}
@@ -921,7 +935,7 @@ and the derived files           tikzscale.ins,
 	% Test all possible file extensions and do not forget that the extension might already be given. \cmd{\Gin@extensions} returns the \href{http://tex.stackexchange.com/a/45502}{current content} set by \cmd{\DeclareGraphicsExtensions}.
 %    \begin{macrocode}
 		\eforcsvlist{\tikzscale@checkExtension}{{},\Gin@extensions}%
-		\ifcsdef{#1}{%
+		\ifdef{#1}{%
 %    \end{macrocode}
 			% Break the outer (\cmd{\forgrouplist}) loop over directories.
 %    \begin{macrocode}
@@ -934,10 +948,10 @@ and the derived files           tikzscale.ins,
 	\tikzscale@setGraphicsPath
 	\eforgrouplist{\tikzscale@checkDirectory}{\tikzscale@graphicspath}%
 %    \end{macrocode}
-	% If no file has been found, return the given file name, as includegraphics should try its best.
+	% If no file has been found, return the given file name, as includegraphics should try its best. Use \cmd{\edef} due to the same reasons as above.
 %    \begin{macrocode}
-	\ifcsundef{#1}{%
-		\csdef{#1}{#2}%
+	\ifundef{#1}{%
+		\edef#1{#2}%
 	}{}%
 }
 %    \end{macrocode}
