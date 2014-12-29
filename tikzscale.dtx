@@ -579,7 +579,7 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 % \begin{macro}{\tikzscale@trimMacro}
-	% A possible present leading or trailing space in the macro's content is removed from the macro.
+% A possible present leading or trailing space in the macro's content is removed from the macro.
 %    \begin{macrocode}
 \def\tikzscale@trimMacro#1{%
 	\expandafter\IfBeginWith\expandafter{#1}{ }{%
@@ -738,7 +738,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\ifExternalizationLoaded{%
 %    \end{macrocode}
-%	\cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead. The idea is to get the tikzscale's includegraphics command being called and then redefine tikzpicture and do the rest of the work there. Do the patching always when \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called, as the patching should also be done when \cmd{\includegraphics} is not used, but \cmd{\tikzpicture} is called directly.
+		% \cmd{\tikzexternaldisable} and \cmd{\tikzexternalenable} normally unintentionally deactivate the tikzscale commands (as they restore the original TikZ commands), so let them restore the tikzscale commands instead. The idea is to get the tikzscale's includegraphics command being called and then redefine tikzpicture and do the rest of the work there. Do the patching always when \cmd{\tikzexternaldisable} or \cmd{\tikzexternalenable} is called, as the patching should also be done when \cmd{\includegraphics} is not used, but \cmd{\tikzpicture} is called directly.
 %    \begin{macrocode}
 		\apptocmd{\tikzexternaldisable}{%
 			\tikzscale@useEnhancedIncludegraphics
@@ -798,7 +798,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Do the patching of endlinechar and tikzpicture here, as tikzpicture should not be changed if not called via the new \cmd{\includegraphics} command.
 %    \begin{macrocode}
-		\tikzscale@FixEndLine
+		\tikzscale@fixEndLine
 %    \end{macrocode}
 		% Find the exact file name, as the ending and the path could be omitted.
 %    \begin{macrocode}
@@ -830,10 +830,10 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@FixEndLine}
+%\begin{macro}{\tikzscale@fixEndLine}
 % tikzpicture environment gets redefined:
 % - without external library: only inside tikzscale (once)
-% - with external library: additionally, whenever \cmd{\externalenable} or \cmd{\externaldisable} is called (\cmd{\tikzpiture} and \cmd{\endtikzpicture})
+% - with external library: additionally, whenever \cmd{\externalenable} or \cmd{\externaldisable} is called (\cmd{\tikzpicture} and \cmd{\endtikzpicture})
 % Use cases to patch tikzpicture:
 % - to use tikzscale's includegraphics
 % - to restore end of line character
@@ -842,9 +842,9 @@ and the derived files           tikzscale.ins,
 % - The patches should not accumulate
 % - A group might make sense to have a local scope
 %    \begin{macrocode}
-\def\tikzscale@FixEndLine{%
+\def\tikzscale@fixEndLine{%
 %    \end{macrocode}
-	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus use a trick to avoid that space. Furthermore, TikZ introduces with a specific version a trailing space character. To get rid of all space character issues, just solve the problem here once an for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
+	% There is a leading space character introduced by the externalization library, if the file is input directly. Thus, use a trick to avoid that space. Furthermore, a specific TikZ version introduces a trailing space character. To get rid of all space character issues, just solve the problem here once and for all. Note, that the redefinition of \cmd{\endlinechar} is local to the current group, so it does not have to be restored at the end of the group.
 %    \begin{macrocode}
 	\edef\tikzscale@restoreEndLineChar{\endlinechar=\the\endlinechar\relax}%
 	\endlinechar=-1%
@@ -1439,7 +1439,7 @@ and the derived files           tikzscale.ins,
 	\tikzscale@warnIfSizeDifference{\requestedWidth}{\wd\tikzscale@measuredSize}{\fileName's width}%
 	\tikzscale@warnIfSizeDifference{\requestedHeight}{\ht\tikzscale@measuredSize}{\fileName's height}%
 %    \end{macrocode}
-	% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+	% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
 %    \begin{macrocode}
 	\tikzscale@conditionalEnableExternalization{\fileName}%
 	\content%
