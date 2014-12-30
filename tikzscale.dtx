@@ -493,9 +493,18 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
+%\begin{macro}{\ifInExternalizationRun}
+% Executes the first argument if we are currently in an externalization run and the second argument otherwise. An externalization run is the execution of LaTeX with the sole purpose to externalize a figure. For example, if the normal shell-escape externalization mode is active, there is one main run, which gets paused, whenever a graphic is externalized. Therefore another LaTeX process is started. The former LaTeX instance is no externalization run, whereas the latter processes are. This is a general command, which might be useful for inclusion into the externalization library.
+%    \begin{macrocode}
+\def\ifInExternalizationRun{%
+	\ifedefequal\jobname\tikzexternalrealjob%
+}
+%    \end{macrocode}
+%\end{macro}
+%
 %\begin{macro}{\ifedefequal}
 % \xcmd\ifedefequal{first expression}{second expression}{true}{false}
-% This is a general command, which might be useful for inclusion into the etoolbox package. It executes the true code if both expressions expand to the same and otherwise the false code. This test is often wanted, as the order of the arguments is not important and it does not matter if the user saves a value in another macro without expanding it.
+% This is a general command, which might be useful for inclusion into the etoolbox package. It executes the true code if both expressions expand to the same and otherwise the false code. This test is often wanted, as the order of the arguments is not important and it does not matter if the user saves a value in another macro without expanding it. This macro is not safe in an expansion-only context. An \href{http://tex.stackexchange.com/a/59571}{expandable solution} exists, too.
 %    \begin{macrocode}
 \def\ifedefequal#1#2{%
 	\edef\etoolbox@ifedefequal@first{#1}%
