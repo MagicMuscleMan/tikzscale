@@ -814,11 +814,11 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\LetLtxMacro{\includegraphics}{\tikzscale@oldincludegraphics}%
 %    \end{macrocode}
-		% Find the exact file name, as the ending and the path could have been omitted at the call and must be resolved.
+		% Find the exact file name, as the ending and the path could have been omitted in the call and must be resolved.
 %    \begin{macrocode}
 		\tikzscale@resolveFileName{\tikzscale@fileName}{#2}%
 %    \end{macrocode}
-		% Do everything else in another macro, which gets the resolved and expanded file name. This way, the expansion is necessary only once.
+		% Do everything else in another macro, which gets the resolved and expanded file name. This way, the expansion is necessary only once and all macros which are called later in this package do not have to do further expansion of the file name.
 %    \begin{macrocode}
 		\expandnext{\tikzscale@includeResolvedFileName{#1}}{\tikzscale@fileName}%
 	\endgroup
@@ -1173,7 +1173,7 @@ and the derived files           tikzscale.ins,
 					(requested=\requestedWidth, externalized graphic=\pgfexternalwidth)\MessageBreak
 				}%
 %    \end{macrocode}
-				% It would be possible to calculate a new size, if the old size did not fit, but this information would be needed to push into the externalization process, what is hard. The idea were requested = requested + measuredOld - fileSize.
+				% It would be possible to calculate a new size, if the old size did not fit, but this information would be needed to push into the externalization process, which is hard. The idea were requested = requested + measuredOld - fileSize.
 %    \begin{macrocode}
 			}{}%
 		}{%
@@ -1304,7 +1304,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\tikzscale@conditionalDisableExternalization
 %    \end{macrocode}
-	% When scaling a tikzpicture, only the drawings are scaled, but nodes are not scaled. So in general, there are horizontal or vertical areas, where the picture contains only unscaled nodes, and areas where the picture contains scalable drawings. Mathematically all scaled and all unscaled areas can be combined, so that there is one are area of fixed size and one variable sized area. Thus scaling only by multiplication of a factor is incorrect in general. To do the correct scaling, the fixed area size must be known. As there are two unknown parameters, i.e. fixed area size and variable area size, the fixed area size can be calculated by measuring the tikzpicture with two different scalings. A special scaling factor is used, to get the size close to the final size minimizing numerical and logical errors.
+	% When scaling a tikzpicture, only the drawings are scaled, but nodes are not scaled. So in general, there are horizontal or vertical areas, where the picture contains only unscaled nodes, and areas where the picture contains scalable drawings. Mathematically, all scaled and all unscaled areas can be combined, so that there is one area of fixed size and one variable sized area. Thus, scaling only by multiplication of a factor is incorrect in general. To do the correct scaling, the fixed area size must be known. As there are two unknown parameters, i.e. fixed area size and variable area size, the fixed area size can be calculated by measuring the tikzpicture with two different scalings. A special scaling factor is used, to get the size close to the final size minimizing numerical and logical errors.
 %    \begin{macrocode}
 	\def\tikzscale@scale{1}%
 	\tikzscale@measureSize{\measuredFirst}{#1}{#2}%
@@ -1326,7 +1326,7 @@ and the derived files           tikzscale.ins,
 		% \cmd{\scale} * \cmd{\variableFirst} = \cmd{\variableSecond},
 		% with \cmd{\variableFirst} = \cmd{\measuredFirst} - \cmd{\fixedSize}
 		% and \cmd{\variableSecond} = \cmd{\measuredSecond} - \cmd{\fixedSize},
-		% which can be solved by substituttion and results in
+		% which can be solved by substitution and results in
 %    \begin{macrocode}
 		\pgfmathsetmacro{\fixedSize}{(\tikzscale@scale*\measuredFirst - \measuredSecond) / (\tikzscale@scale - 1)}%
 %    \end{macrocode}
@@ -1483,7 +1483,7 @@ and the derived files           tikzscale.ins,
 		\pgfmathsetmacro{\widthDifference}{\wd\tikzscale@measuredSize - \requestedWidth}%
 		\pgfmathsetmacro{\heightDifference}{\ht\tikzscale@measuredSize - \requestedHeight}%
 %    \end{macrocode}
-		% Output error in current iterion for debugging.
+		% Output error in current iteration for debugging.
 %    \begin{macrocode}
 % 		\tikzscale@debug{widthDifference=\widthDifference, heightDifference=\heightDifference}
 %    \end{macrocode}
@@ -1602,7 +1602,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 \newsavebox{\tikzscale@measuredSize}
 %    \end{macrocode}
-% \xcmd\measureSize{result variable name}{\cmd{\wd} or \cmd{\ht}}{to-be-measured content}
+% \xcmd\measureSize{result macro name}{\cmd{\wd} or \cmd{\ht}}{to-be-measured content}
 %    \begin{macrocode}
 \def\tikzscale@measureSize#1#2#3{%
 	\sbox{\tikzscale@measuredSize}{#3}%
