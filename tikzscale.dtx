@@ -675,12 +675,18 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@debug}
-% Activate and deactivate debugging by commenting and uncommenting the folowing code.
 %    \begin{macrocode}
-% \def\tikzscale@debug#1{%
-% 	\PackageWarning{tikzscale}{#1}%
-% }
-\def\tikzscale@debug#1{}%
+\def\tikzscale@debug#1{%
+	\PackageWarning{tikzscale}{#1}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@warn}
+%    \begin{macrocode}
+\def\tikzscale@warn#1{%
+	\PackageWarning{tikzscale}{#1}%
+}
 %    \end{macrocode}
 %\end{macro}
 %
@@ -796,6 +802,8 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\includegraphics}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includegraphics}{O{}m}{%
+% 	\tikzscale@debug{In includegraphics, 1=#1, 2=#2}%
+% 	\tikzscale@debug{In includegraphics, jobname=\jobname\ifdef{\tikzexternalrealjob}{, tikzexternalrealjob=\tikzexternalrealjob}{}}%
 %    \end{macrocode}
 	% This command uses an empty optional argument for compatibility with the traditional graphicx command.
 	% Start a group, so that changed variables during processing the current tikzpicture due not influence other tikzpictures. This is much more convienient, than resetting every single variable. Use \cmd{\begingroup} instead of \cmd{\bgroup} to simplify finding unmatched braces.
@@ -822,6 +830,7 @@ and the derived files           tikzscale.ins,
 % Include the graphic with the optional arguments in argument one and the fully expanded and resolved file name in the second argument.
 %    \begin{macrocode}
 \def\tikzscale@includeResolvedFileName#1#2{%
+% 	\tikzscale@debug{In includeResolvedFileName, 1=#1, 2=#2}%
 %    \end{macrocode}
 	% Do the patching of endlinechar and tikzpicture here, as tikzpicture should not be changed if not called via the new \cmd{\includegraphics} command.
 	% TODO: Wouldn't it be better to call fixEndLine only if the argument really is a TikZ file? Then it would not be necessary to restoreEndLineChar if the argument is no TikZ file. Or would that be problematic for includegraphics calls inside of tikzpictures?
@@ -1049,6 +1058,7 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 % \NewDocumentCommand{\tikzscale@includetikz}{O{}m}{%
 \newcommand{\tikzscale@includetikz}[2][]{%
+% 	\tikzscale@debug{In includetikz, 1=#1, 2=#2}%
 %    \end{macrocode}
 	% Check the keys here already, as they are needed both to see if already externalized files fulfill their requirements and to handle unexternalized files.
 %    \begin{macrocode}
@@ -1061,7 +1071,7 @@ and the derived files           tikzscale.ins,
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
 		\tikzifexternalizingnext{%
-			\tikzscale@debug{Externalizing the file #2}%
+% 			\tikzscale@debug{Externalizing the file #2}%
 			\tikzscale@includetikzUnexternalized{#2}%
 		}{%
 			\tikzscale@includetikzWithExternalization{#2}%
@@ -1079,23 +1089,25 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@includetikzUnexternalized}
 %    \begin{macrocode}
 \def\tikzscale@includetikzUnexternalized#1{%
+% 	\tikzscale@debug{In includetikzUnexternalized, 1=#1}%
+	%
 	\elseif{test {\ifundef{\requestedWidth}} and test {\ifundef{\requestedHeight}} and test {\ifundef{\requestedAxisRatio}}}{%
-		\tikzscale@debug{no option given}%
+% 		\tikzscale@debug{In includetikzUnexternalized, no option given}%
 %    \end{macrocode}
 		% If no option is given, directly load the content, as nothing should get scaled.
 %    \begin{macrocode}
 		\tikzscale@trim{\input{#1}}%
 	}{test {\ifdef{\requestedWidth}} and test {\ifdef{\requestedHeight}}}{%
-		\tikzscale@debug{width and height given}%
+% 		\tikzscale@debug{In includetikzUnexternalized, width and height given}%
 %    \end{macrocode}
 		% If width and height are given, the content must be a pgfplot, so scale it. The plot currently only had approximately the given size without calling the resizeTo macro, due to a (known) bug in PGFPlots.
 %    \begin{macrocode}
 		\tikzscale@resizePlotTo{#1}%
 	}{test {\ifdef{\requestedAxisRatio}}}{%
-		\tikzscale@debug{axis ratio given}%
+% 		\tikzscale@debug{In includetikzUnexternalized, axis ratio given}%
 		\tikzscale@includeAxisRatio{#1}%
 	}{test {\ifundef{\requestedAxisRatio}}}{%
-		\tikzscale@debug{width or height given}%
+% 		\tikzscale@debug{In includetikzUnexternalized, width or height given}%
 %    \end{macrocode}
 		% Use this test as a check if PGFPlots has been loaded.
 %    \begin{macrocode}
@@ -1106,7 +1118,7 @@ and the derived files           tikzscale.ins,
 			\def\requestedAxisRatio{1}%
 			\tikzscale@includeAxisRatio{#1}%
 		}{%
-			\tikzscale@debug{no pgfplots loaded}%
+% 			\tikzscale@debug{In includetikzUnexternalized, no pgfplots loaded}%
 %    \end{macrocode}
 			% If PGFPlots has not been loaded, it can only be a TikZPicture.
 %    \begin{macrocode}
@@ -1124,6 +1136,7 @@ and the derived files           tikzscale.ins,
 % This macro includes a tikzpicture file using the externalization library. As a precondition, the externalization must be loaded and active.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includetikzWithExternalization}{m}{%
+% 	\tikzscale@debug{In includetikzWithExternalization, 1=#1}%
 %    \end{macrocode}
 	% Try to load a dpth file to get the sizes pgfexternalwidth and pgfexternalheight as well as tikzscale@oldAxisRatio of the externalized graphic.
 %    \begin{macrocode}
@@ -1138,6 +1151,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% The figure is either remade or the PDF is included with the following call. The former is correct if the file has been changed, the latter is correct if the last run was correct and nothing has changed since then. The only case left is if the figure has neither changed, nor is the exported size correct, as the file is then regenerated repeating the same error as last time. To change something, the new externalisation would need the result of the old externalization, but as the externalization is processed in a separate LaTeX process, it's non-trivial to push the information there.
 %    \begin{macrocode}
+% 	\tikzscale@debug{In includetikzWithExternalization, processing graphic #1 (this might start a separate externalization run)}%
 	\tikzscale@trim{\input{#1}}%
 }
 %    \end{macrocode}
@@ -1153,38 +1167,58 @@ and the derived files           tikzscale.ins,
 		\ifdef{\pgfexternalwidth}{%
 			\tikzscale@ifSizeDifference{\requestedWidth - \pgfexternalwidth}{%
 				\tikzset{external/remake next}%
-				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of width difference \MessageBreak (requestedWidth=\requestedWidth, pgfexternalwidth=\pgfexternalwidth)}%
-% 				\tikzscale@warnIfSizeDifference{\requestedWidth}{\pgfexternalwidth}{current file}%
+				\tikzscale@warn{%
+					Regenerate \tikzscale@externalizationName \MessageBreak
+					because of width difference\MessageBreak
+					(requested=\requestedWidth, externalized graphic=\pgfexternalwidth)\MessageBreak
+				}%
 %    \end{macrocode}
 				% It would be possible to calculate a new size, if the old size did not fit, but this information would be needed to push into the externalization process, what is hard. The idea were requested = requested + measuredOld - fileSize.
 %    \begin{macrocode}
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external width}%
+			\tikzscale@warn{%
+				Regenerate \tikzscale@externalizationName \MessageBreak
+				because of no external width\MessageBreak
+			}%
 		}%
 	}{}%
 	\ifdef{\requestedHeight}{%
 		\ifdef{\pgfexternalheight}{%
 			\tikzscale@ifSizeDifference{\requestedHeight - \pgfexternalheight}{%
 				\tikzset{external/remake next}%
-				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of height difference \MessageBreak (requestedHeight=\requestedHeight, pgfexternalheight=\pgfexternalheight)}%
+				\tikzscale@warn{%
+					Regenerate \tikzscale@externalizationName \MessageBreak
+					because of height difference\MessageBreak
+					(requested=\requestedHeight, externalized graphic=\pgfexternalheight)\MessageBreak
+				}%
 			}{}%
 		}{%
 			\tikzset{external/remake next}%
-			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external height}%
+			\tikzscale@warn{%
+				Regenerate \tikzscale@externalizationName \MessageBreak
+				because of no external height\MessageBreak
+			}%
 		}%
 	}{}%
 	\ifdef{\requestedAxisRatio}{%
 		\ifdef{\tikzscale@oldAxisRatio}{%
 			\tikzscale@ifSizeDifference{\requestedAxisRatio - \tikzscale@oldAxisRatio}{%
 				\tikzset{external/remake next}%
-				\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of axis ratio difference \MessageBreak (requestedAxisRatio=\requestedAxisRatio, oldAxisRatio=\tikzscale@oldAxisRatio)}%
+				\tikzscale@warn{%
+					Regenerate \tikzscale@externalizationName \MessageBreak
+					because of axis ratio difference\MessageBreak
+					(requested=\requestedAxisRatio, externalized graphic=\tikzscale@oldAxisRatio)\MessageBreak
+				}%
 			}{}%
 			\undef{\tikzscale@oldAxisRatio}%
 		}{%
 			\tikzset{external/remake next}%
-			\tikzscale@debug{Regenerate \tikzscale@externalizationName \MessageBreak because of no external axis ratio}%
+			\tikzscale@warn{%
+				Regenerate \tikzscale@externalizationName \MessageBreak
+				because of no external axis ratio\MessageBreak
+			}%
 		}%
 	}{}%
 }
@@ -1209,6 +1243,8 @@ and the derived files           tikzscale.ins,
 % \xcmd\tikzscale@includeNormalTikzpicture{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeNormalTikzpicture}{m}{%
+% 	\tikzscale@debug{In includeNormalTikzpicture, 1=#1}%
+	%
 	\tikzscale@prepareTikzpicture
 	\elseif{test {\ifdef{\requestedWidth}} and test {\ifundef{\requestedHeight}}}{%
 		\def\requestedSize{\requestedWidth}%
@@ -1235,6 +1271,7 @@ and the derived files           tikzscale.ins,
 % \xcmd\tikzscale@includeAxisRatio{file name}
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@includeAxisRatio}{m}{%
+% 	\tikzscale@debug{In includeAxisRatio, 1=#1}%
 %    \end{macrocode}
 	% Try to set initial sizes close to the requested sizes, to improve the optimization's speed.
 %    \begin{macrocode}
@@ -1261,7 +1298,7 @@ and the derived files           tikzscale.ins,
 % The first argument determines if a specific width or a specific height should be achieved by scaling.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@scaleTikzpictureTo}{mmm}{%
-	\tikzscale@debug{At beginning scale, requestedWidth=\requestedWidth}%
+% 	\tikzscale@debug{In scaleTikzpictureTo, 1=#1, 2=OMITTED, 3=#3, requestedSize=\requestedSize}%
 %    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
@@ -1313,7 +1350,7 @@ and the derived files           tikzscale.ins,
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
 				\pgfmathsetmacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
-				\tikzscale@debug{errorRatio=\errorRatio\MessageBreak for #3}%
+% 				\tikzscale@debug{errorRatio=\errorRatio\MessageBreak for #3}%
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
 				\breakforeach%
@@ -1339,6 +1376,7 @@ and the derived files           tikzscale.ins,
 %
 %    \begin{macrocode}
 \def\tikzscale@testGraphicFileForRetry#1#2#3#4{%
+% 	\tikzscale@debug{In testGraphicFileForRetry, 1=\detokenize{#1}, 2=OMITTED, 3=#3, 4=#4}%
 %    \end{macrocode}
 	% Reactivate externalization to prepare the figure to be really rendered.
 %    \begin{macrocode}
@@ -1372,7 +1410,8 @@ and the derived files           tikzscale.ins,
 		\ifundef{\originalRequestedSize}{%
 			\let\originalRequestedSize\requestedSize
 		}{}%
-		\tikzscale@debug{originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
+		%
+% 		\tikzscale@debug{In testGraphicFileForRetry, originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
 %    \end{macrocode}
 		% If a size difference is left, compensate it, decrease the counter and try the scaling again.
 %    \begin{macrocode}
@@ -1390,6 +1429,7 @@ and the derived files           tikzscale.ins,
 % Decrease the externalization figure counter. This way the last externalized figure will be overwritten when the next figure is externalized. This is useful if the same figure should be externalized again. This code is a modified copy of \cmd{\tikzexternal@getnextfilename@advancecount} from file tikzexternalshared.code.tex.
 %    \begin{macrocode}
 \def\tikzscale@decreaseFigureCounter{%
+% 	\tikzscale@debug{In decreaseFigureCounter}%
 %    \end{macrocode}
 % 		Use a group, so that the used counter register is not changed outside of this macro. This is necessary, as the global figure counter is not saved in a counter as one might think, but in a macro, so it must be copied to a local counter in order to be easily modified.
 %    \begin{macrocode}
@@ -1445,7 +1485,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Output error in current iterion for debugging.
 %    \begin{macrocode}
-% 		widthDifference: \widthDifference, heightDifference: \heightDifference\\% Debugging
+% 		\tikzscale@debug{widthDifference=\widthDifference, heightDifference=\heightDifference}
 %    \end{macrocode}
 		% Check if the remaining error is larger than a threshold.
 %    \begin{macrocode}
@@ -1480,6 +1520,7 @@ and the derived files           tikzscale.ins,
 % The first argument determines if a specific width or a specific height should be achieved by resizing.
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizePlotWithAxesRatioTo}{mmmm}{%
+% 	\tikzscale@debug{In resizePlotWithAxesRatioTo, 1=#1, 2=#2, 3=OMITTED, 4=#4}%
 	\def\dimension{#1}%
 	\def\variable{#2}%
 	\def\content{#3}%
@@ -1516,6 +1557,7 @@ and the derived files           tikzscale.ins,
 			}%
 			\tikzscale@ifSizeDifference{\sizeDifference-\tikzscale@oldSizeDifference}{%
 			}{%
+% 				\tikzscale@debug{In resizePlotWithAxesRatioTo, resize unsuccessful, executing normal tikzpicture logic}%
 %    \end{macrocode}
 				% Restore the externalization state in order to have strict enable-disable-call-pairing.
 %    \begin{macrocode}
@@ -1598,7 +1640,7 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@conditionalDisableExternalization}
 %    \begin{macrocode}
 \def\tikzscale@conditionalDisableExternalization{%
-	\tikzscale@debug{In conditionalDisableExternalization}%
+% 	\tikzscale@debug{In conditionalDisableExternalization}%
 	%
 	\tikzscale@ifExternalizationActive{%
 		\tikzexternaldisable
@@ -1634,7 +1676,7 @@ and the derived files           tikzscale.ins,
 % 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
 % 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
 \def\tikzscale@conditionalEnableExternalization{%
-	\tikzscale@debug{In conditionalEnableExternalization}%
+% 	\tikzscale@debug{In conditionalEnableExternalization}%
 	%
 	\ifdef{\tikzscale@externalizationWasDisabled}{%
 		\tikzexternalenable
