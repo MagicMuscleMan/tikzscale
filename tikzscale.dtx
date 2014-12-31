@@ -830,8 +830,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Check if the found file is a TikZ file.
 %    \begin{macrocode}
-	\tikzscale@isTikzFile{tikzscale@testTikzFile}{#2}%
-	\ifcsdef{tikzscale@testTikzFile}{%
+	\tikzscale@ifIsTikzFile{#2}{%
 		\tikzscale@includetikz[#1]{#2}%
 	}{%
 %    \end{macrocode}
@@ -993,25 +992,30 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 %\end{macro}
 %
-% \begin{macro}{\tikzscale@isTikzFile}
-% The first argument is the macro name (without backslash), which gets defined if the file is a tikzfile.
-% The second argument is the file name.
+% \begin{macro}{\tikzscale@ifIsTikzFile}
+% The first argument is the file name.
+% The second argument is the true case.
+% The third argument ist the false case.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@isTikzFile}{mm}{%
+\NewDocumentCommand{\tikzscale@ifIsTikzFile}{m}{%
 	%    \end{macrocode}
-	% Create a helper function used inside the evaluation.
+	% Create a helper function used inside the evaluation of \cmd{\edocsvlist} below.
 	%    \begin{macrocode}
 	\def\do##1{%
-		\IfEndWith{#2}{##1}{%
-			\csdef{#1}{}%
+		\IfEndWith{#1}{##1}{%
+			\def\tikzscale@testTikzFile{}%
 			\listbreak
 		}{}%
 	}%
 %    \end{macrocode}
 	% Delete macro so that defining it is really indicating something.
 %    \begin{macrocode}
-	\csundef{#1}%
-	\edocsvlist{\tikzscale@tikzFileExtensions}%
+	\undef\tikzscale@testTikzFile%
+	\edocsvlist\tikzscale@tikzFileExtensions%
+%    \end{macrocode}
+	% Really do the if-else while absorbing the remaining two arguments.
+%    \begin{macrocode}
+	\ifdef\tikzscale@testTikzFile%
 }
 %    \end{macrocode}
 %\end{macro}
