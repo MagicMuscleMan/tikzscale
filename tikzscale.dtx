@@ -1342,7 +1342,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Reactivate externalization to prepare the figure to be really rendered.
 %    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{#3}%
+	\tikzscale@conditionalEnableExternalization
 %    \end{macrocode}
 	% Before externalizing the file, save the current externalization file name to be possibly used later. This code must be run after the reactivation of the externalization and before the rendering itself.
 %    \begin{macrocode}
@@ -1468,8 +1468,8 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 	% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
 %    \begin{macrocode}
-	\tikzscale@conditionalEnableExternalization{\fileName}%
-	\content%
+	\tikzscale@conditionalEnableExternalization
+	\content
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1519,7 +1519,7 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 				% Restore the externalization state in order to have strict enable-disable-call-pairing.
 %    \begin{macrocode}
-				\tikzscale@conditionalEnableExternalization{\fileName}%
+				\tikzscale@conditionalEnableExternalization
 				\tikzscale@includeNormalTikzpicture{#4}%
 				\gdef\tikzscale@alreadyIncluded{true}%
 				\breakforeach
@@ -1540,8 +1540,8 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 		% Finally, externalize and include the graphic with the final size. The graphic must not be include by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
 %    \begin{macrocode}
-		\tikzscale@conditionalEnableExternalization{\fileName}%
-		\content%
+		\tikzscale@conditionalEnableExternalization
+		\content
 	}%
 }
 %    \end{macrocode}
@@ -1597,7 +1597,9 @@ and the derived files           tikzscale.ins,
 %
 %\begin{macro}{\tikzscale@conditionalDisableExternalization}
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@conditionalDisableExternalization}{}{%
+\def\tikzscale@conditionalDisableExternalization{%
+	\tikzscale@debug{In conditionalDisableExternalization}%
+	%
 	\tikzscale@ifExternalizationActive{%
 		\tikzexternaldisable
 		\def\tikzscale@externalizationWasDisabled{}%
@@ -1620,9 +1622,8 @@ and the derived files           tikzscale.ins,
 %\end{macro}
 %
 %\begin{macro}{\tikzscale@conditionalEnableExternalization}
-% Activate externalization of TikZ graphics iff it had been active before definitely disabling it for measurement purposes. The argument contains the file name.
+% Activate externalization of TikZ graphics iff it had been active before definitely disabling it for measurement purposes.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@conditionalEnableExternalization}{m}{%
 %    \end{macrocode}
 	% For the externalization, set correct file name and only externalize the graphic with the final size. This produces a \href{http://old.nabble.com/minor-comment-about-TikZ-external-library-usage-tt31042245.html#a31042245}{known bug}
 %    \begin{macrocode}
@@ -1632,14 +1633,18 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 % 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
 % 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
+\def\tikzscale@conditionalEnableExternalization{%
+	\tikzscale@debug{In conditionalEnableExternalization}%
+	%
 	\ifdef{\tikzscale@externalizationWasDisabled}{%
 		\tikzexternalenable
 		\undef\tikzscale@externalizationWasDisabled
 	}{}%
-%    \end{macrocode}
-	% Restore the endlinechar here and not in the general \cmd{\tikzexternalenable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
-%    \begin{macrocode}
+	%
 	\ifExternalizationLoaded{%
+%    \end{macrocode}
+		% Restore the endlinechar here and not in the general \cmd{\tikzexternalenable} code, as it should only be restored if \cmd{\includegraphics} had been called and not if a tikzpicture was called directly without using \cmd{\includegraphics}. If the externalization has not been loaded, the endlinechar would be redefined twice (which would probably also do not much harm).
+%    \begin{macrocode}
 		\tikzscale@addRestoreEndLineCharToTikzpicture
 	}{}%
 %    \end{macrocode}
