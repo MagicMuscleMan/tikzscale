@@ -1,5 +1,9 @@
 \tdplotsetmaincoords{77}{-8}%
-\begin{tikzpicture}[tdplot_main_coords]%
+\begin{tikzpicture}[%
+	tdplot_main_coords,%
+	show background rectangle,%
+	background rectangle/.style={fill=yellow}
+	]%
 	\draw [->] (0,0,0) -- (1,0,0) node[below] {$x_1$};%
 	\draw [->] (0,0,0) -- (0,0,1) node[left] {$x_2$};%
 	\draw [->] (0,0,0) -- (0,1,0) node[left] {$x_3$};%

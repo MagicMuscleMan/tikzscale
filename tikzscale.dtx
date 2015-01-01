@@ -376,7 +376,7 @@ and the derived files           tikzscale.ins,
 % Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ or PGFPlots.
 %
 % \subsection{Externalization library}
-% TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge.
+% TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge. Please note, that when using the externalization library, sometimes two (externalization) runs are necessary to get completely correct sizes.
 %
 % \subsection{Fitting library}
 % Due to a \href{http://sourceforge.net/tracker/index.php?func=detail&aid=2991312&group_id=142562&atid=752792}{known bug in the fitting library}, nodes with a \texttt{fit} option also need a \texttt{transform shape} option in order to be scalable. If they are not scalable, they normally do not contain the nodes as specified when tikzscale is used.
@@ -385,8 +385,9 @@ and the derived files           tikzscale.ins,
 % \begin{itemize}
 %	\item With careful considerations, it should be possible to reduce the average number of needed figure renderings, which should speed-up runs with very complicated figures.
 %	\item Add the external file optimization loop to axis ratio and pgfplots, as well.
-%	\item It might be a good idea to use the file names as figure names, but probably only if the name was not already set by the user. Additionally, there must be taken care to not try to write into a directory where there is no write access (e.g. reading a graphic from a system wide TeX installation)
-%	\item if graphic files are located in a subdirectory, the externalized files should also be in that subdirectory.
+%	\item For width or height scaling, the main process sometimes lets a client process build a graphic which needs a rebuild to get the correct size. The main process should get some logic to issue a warning (currently only the client process issues a warning). Immediately triggering a rebuild would be even better (depending on the externalization mode). 
+%	\item The figure name should not be choosen automatically if the name was already set by the user.
+%	\item If graphic files are located in a subdirectory, the externalized files should also be in that subdirectory. But there must be a fallback if a graphic is inside a directory without write access (otherwise externalizing a graphic from a system wide TeX installation would fail).
 %	\item allow in-file graphics by redefining the tikzpicture environment and accepting tikzscale and tikz options. The tikzscale options are evaluated using key filtering (tikz library) and the tikz options are forwarded.
 %	\item the package can test if a pgfplot is used (needed if normal TikZ graphics should be stretchable) by changing \cmd{\tikzscale@width} and or \cmd{\tikzscale@height} and measuring. If nothing changes, it must be a normal tikzpicture (the argument does not hold the other way round).
 %	\item it may be better to use the \href{http://tex.stackexchange.com/a/22957}{depth as well}
@@ -730,14 +731,6 @@ and the derived files           tikzscale.ins,
 	\ifExternalizationLoaded{%
 		\pgfkeys{/pgf/images/external info}%
 	}{}%
-%    \end{macrocode}
-	% Provide dummy commands, if the externalization library has not been loaded during the preamble.
-%    \begin{macrocode}
-% 	\ProvideDocumentCommand{\tikzsetnextfilename}{m}{}%
-% 	\ProvideDocumentCommand{\tikzsetexternalprefix}{m}{}%
-%    \end{macrocode}
-%
-%    \begin{macrocode}
 	\@ifpackageloaded{tikz}{%
 %    \end{macrocode}
 		% Set a minimum accuracy tikzscale tries to achieve. TeX's accuracy is limited, thus, e.g. 0.04 pt, cannot always be achieved independent of the number of iterations. Use the \href{http://en.wikibooks.org/wiki/TeX/hfuzz}{value} (0.1 pt in an experiment) which is used for overfull paragraph warnings, too.
@@ -776,6 +769,10 @@ and the derived files           tikzscale.ins,
 				% Write the axis ratio into the dpth file into variable \cmd{\tikzscale@oldAxisRatio}. The existence of the variable in the dpth file indicates if the axis ratio has been given in the last run.
 %    \begin{macrocode}
 				\tikzscale@writeToDpth{#1}{\tikzscale@oldAxisRatio}{\requestedAxisRatio}%
+%    \end{macrocode}
+				% Figures sometimes get externalized with a wrong size although they had a correct size before externalization. This size error has to be compensated in the next run, i.e. the figure must be generated with a corrected (i.e. "wrong") size to have the correct size after externalization. The error is the difference between internal measurement and external measurement. Thus, write the measured size into the dpth file into variable \cmd{\tikzscale@oldMeasuredSize} to have it available for error calculation. After perfect convergence, the measured size equals the requested size and must not be safed. However, safing the measured size is more robust, as it works even if no perfect convergence could be achieved.
+%    \begin{macrocode}
+				\tikzscale@writeToDpth{#1}{\tikzscale@oldMeasuredSize}{\tikzscale@measuredLast}%
 			\fi
 		}%
 	}{}%
@@ -795,6 +792,22 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\immediate\write#1{\noexpand\pgfexternal@restore{\noexpand\def\noexpand#2{#3}}}%
 	}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@maybeGetExternalSize}
+% Returns the width or the height of the externalized graphic with already loaded dpth file in macro \cmd{\pgfexternalsize}. Otherwise, the macro is undefined. The width is returned if the parameter is \cmd{wd}, the height is returned if the parameter is \cmd{\ht}. 
+%    \begin{macrocode}
+\def\tikzscale@maybeGetExternalSize#1{%
+%    \end{macrocode}
+	% Use the expandability of ifIsWidth and the coupled (non-)definition of \cmd\pgfexternalwidth and \cmd\pgfexternalheight.
+%    \begin{macrocode}
+	\ifdef\pgfexternalwidth{
+		\edef\pgfexternalsize{\tikzscale@ifIsWidth#1\pgfexternalwidth\pgfexternalheight}%
+	}{%
+		\undef\pgfexternalsize
+	}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1068,6 +1081,13 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 	\tikzscale@ifExternalizationActive{%
 %    \end{macrocode}
+		% Choose a readable name for the externalized figure instead of "{MAIN-TEX-FILE-NAME}-figure{COUNTER}". This is possible with tikzscale compared to TikZ because, every tikzpicture has a (file-)name due to the \cmd{\includegraphics} interface. There are two advantages:
+		% - The externalized figures can be found much faster in a file explorer in case of debugging.
+		% - For debuging purposes, figures can be deactivated without needing to rebuild all figures.
+		% If you want to have the regular file naming of the externalization mode, just comment the following code line.
+%    \begin{macrocode}
+		\tikzscale@setExternalizationName{#2}%
+%    \end{macrocode}
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
 		\tikzifexternalizingnext{%
@@ -1302,6 +1322,28 @@ and the derived files           tikzscale.ins,
 \NewDocumentCommand{\tikzscale@scaleTikzpictureTo}{mmm}{%
 % 	\tikzscale@debug{In scaleTikzpictureTo, 1=#1, 2=OMITTED, 3=#3, requestedSize=\requestedSize}%
 %    \end{macrocode}
+	% Correct \cmd{\requestedSize} if there has been an error introduced by externalization and save original size for bookkeeping purposes.
+%    \begin{macrocode}
+	\tikzscale@ifExternalizationActive{
+% 		\tikzscale@debug{In scaleTikzpictureTo, externalization active}%
+%    \end{macrocode}
+		% Save the \cmd{\requestedSize} from the user in \cmd{\originalRequestedSize}, as the former value has to be overwritten for the next try. Do not use \cmd{\def}, as that would later be expanded to the current and not to the original value.
+%    \begin{macrocode}
+		\let\originalRequestedSize\requestedSize
+		%    \end{macrocode}
+		% Read the necessary data if available.
+%    \begin{macrocode}
+		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
+		\pgfexternalreaddpth{\tikzscale@externalizationName}%
+		\tikzscale@maybeGetExternalSize#1%
+% 		\tikzscale@debug{In scaleTikzpictureTo, after dpth file loading \ifdef\pgfexternalsize{pgfexternalsize=\pgfexternalsize}{}}%
+		\ifdef\pgfexternalsize{%
+% 			\tikzscale@debug{In scaleTikzpictureTo, oldMeasuredSize=\tikzscale@oldMeasuredSize}%
+			\pgfmathsetmacro{\requestedSize}{\requestedSize + \tikzscale@oldMeasuredSize - \pgfexternalsize}%
+		}{}%
+% 		\tikzscale@debug{In scaleTikzpictureTo, requestedSize after size correction=\requestedSize}%
+	}{}%
+%    \end{macrocode}
 	% Deactivate the externalization, as the measurements to determine the correct size should not be externalized.
 %    \begin{macrocode}
 	\tikzscale@conditionalDisableExternalization
@@ -1309,123 +1351,140 @@ and the derived files           tikzscale.ins,
 	% When scaling a tikzpicture, only the drawings are scaled, but nodes are not scaled. So in general, there are horizontal or vertical areas, where the picture contains only unscaled nodes, and areas where the picture contains scalable drawings. Mathematically, all scaled and all unscaled areas can be combined, so that there is one area of fixed size and one variable sized area. Thus, scaling only by multiplication of a factor is incorrect in general. To do the correct scaling, the fixed area size must be known. As there are two unknown parameters, i.e. fixed area size and variable area size, the fixed area size can be calculated by measuring the tikzpicture with two different scalings. A special scaling factor is used, to get the size close to the final size minimizing numerical and logical errors.
 %    \begin{macrocode}
 	\def\tikzscale@scale{1}%
-	\tikzscale@measureSize{\measuredFirst}{#1}{#2}%
-	\pgfmathsetmacro{\tikzscale@scale}{\requestedSize/\measuredFirst}%
-	\tikzscale@measureSize{\measuredSecond}{#1}{#2}%
+	\tikzscale@measureSize{\measuredInitial}{#1}{#2}%
+	\pgfmathsetmacro{\tikzscale@scale}{\requestedSize/\measuredInitial}%
+	\tikzscale@measureSize{\tikzscale@measuredLast}{#1}{#2}%
+	%
+% 	\tikzscale@debug{%
+% 		In scaleTikzpictureTo\MessageBreak
+% 		measuredFirst=\measuredInitial with scale=1\MessageBreak
+% 		measuredSecond=\tikzscale@measuredLast with scale=\tikzscale@scale\MessageBreak
+% 	}%
 %    \end{macrocode}
 	% It can happen, that there are no variable areas. Furthermore, the original size could already fit. Avoid numerical problems in both cases by directly drawing the picture. Do not compare the float values directly, as TeX's precision is quite limited.
 %    \begin{macrocode}
-	\tikzscale@ifSizeDifference{\measuredSecond - \requestedSize}{%
+	\tikzscale@ifSizeDifference{\tikzscale@measuredLast - \requestedSize}{%
+% 		\tikzscale@debug{In scaleTikzpictureTo, size difference remaining}%
 %    \end{macrocode}
 	% If a plot is not scalable (e.g. consisting of a node only), but is not correctly scaled, exit with an error.
 %    \begin{macrocode}
-		\tikzscale@ifSizeDifference{\measuredFirst - \measuredSecond}{%
+		\tikzscale@ifSizeDifference{\measuredInitial - \tikzscale@measuredLast}{%
 		}{%
 			\PackageError{tikzscale}{Requested to scale unscalable graphic}{Do not set width or height for graphic in\MessageBreak #3}%
 		}%
 %    \end{macrocode}
 		% We know, that the variable sized area scales with the scaling factor, thus it holds
-		% \cmd{\scale} * \cmd{\variableFirst} = \cmd{\variableSecond},
-		% with \cmd{\variableFirst} = \cmd{\measuredFirst} - \cmd{\fixedSize}
-		% and \cmd{\variableSecond} = \cmd{\measuredSecond} - \cmd{\fixedSize},
+		% \cmd{\scale} * \cmd{\variableInitial} = \cmd{\variableLast},
+		% with \cmd{\variableInitial} = \cmd{\measuredInitial} - \cmd{\fixedSize}
+		% and \cmd{\variableLast} = \cmd{\tikzscale@measuredLast} - \cmd{\fixedSize},
 		% which can be solved by substitution and results in
 %    \begin{macrocode}
-		\pgfmathsetmacro{\fixedSize}{(\tikzscale@scale*\measuredFirst - \measuredSecond) / (\tikzscale@scale - 1)}%
+		\pgfmathsetmacro{\fixedSize}{(\tikzscale@scale*\measuredInitial - \tikzscale@measuredLast) / (\tikzscale@scale - 1)}%
 % 		\tikzscale@debug{In scaleTikzpictureTo, fixedSize=\fixedSize}%
 %    \end{macrocode}
 		% Now, to get the correct scaling factor, only take the variable areas into account, as it holds
 		% \cmd{\scaleFinal} = \cmd{\variableSizeFinal} / \cmd{\variableSizeOriginal}
 		% with \cmd{\variableSizeFinal} = \cmd{\requestedSize} - \cmd{\fixedSize}
-		% and \cmd{\variableSizeOriginal} = \cmd{\measuredFirst} - \cmd{\fixedSize},
+		% and \cmd{\variableSizeOriginal} = \cmd{\measuredInitial} - \cmd{\fixedSize},
 		% which results in
 %    \begin{macrocode}
-		\pgfmathsetmacro{\tikzscale@scale}{(\requestedSize - \fixedSize) / (\measuredFirst - \fixedSize)}%
+		\pgfmathsetmacro{\tikzscale@scale}{(\requestedSize - \fixedSize) / (\measuredInitial - \fixedSize)}%
 % 		\tikzscale@debug{In scaleTikzpictureTo, scale=\tikzscale@scale}%
 %    \end{macrocode}
 		% Additionally or alternatively the brute force approach to iteratively improve the solution can be used.
 %    \begin{macrocode}
 		\foreach \l in {1,...,\maxTestIterations}{%
-			\tikzscale@measureSize{\measuredIntermediate}{#1}{#2}%
+%    \end{macrocode}
+			% Make measuredLast global to survive the end of the group used by \cmd{\foreach}.
+%    \begin{macrocode}
+			\tikzscale@globalMeasureSize{\tikzscale@measuredLast}{#1}{#2}%
+% 			\tikzscale@debug{In scaleTikzpictureTo, iteration \l, measured=\tikzscale@measuredLast}%
 %    \end{macrocode}
 			% Optimize until the absolute difference is small enough, although the (relative) size ratios are used to calculate a new scaling factor.
 %    \begin{macrocode}
-			\tikzscale@ifSizeDifference{\measuredIntermediate-\requestedSize}{%
+			\tikzscale@ifSizeDifference{\tikzscale@measuredLast-\requestedSize}{%
 %    \end{macrocode}
 				% First divide before multiply to avoid overflowing (at 16384).
 %    \begin{macrocode}
-				\pgfmathsetmacro{\errorRatio}{\measuredIntermediate/\requestedSize}%
-% 				\tikzscale@debug{errorRatio=\errorRatio\MessageBreak for #3}%
+				\pgfmathsetmacro{\errorRatio}{\tikzscale@measuredLast/\requestedSize}%
+% 				\tikzscale@debug{In scaleTikzpictureTo, errorRatio=\errorRatio\MessageBreak for #3}%
+%    \end{macrocode}
+				% As \cmd{\foreach} executes in a TeX group, use a global definition to get the result out of the group. Alternatively, \cmd{\aftergroup@def} could be used, but it is unclear if that can be called in every iteration..
+%    \begin{macrocode}
 				\pgfmathsetglobalmacro{\tikzscale@scale}{\tikzscale@scale/\errorRatio}%
 			}{%
+% 				\tikzscale@debug{%
+% 					In scaleTikzpictureTo, converged, exit optimization,\MessageBreak
+% 					requested=\requestedSize, measured=\tikzscale@measuredLast
+% 				}%
 				\breakforeach%
 			}%
 		}%
 %    \end{macrocode}
-		 % Do a last measurement to be able to warn if the size does not fit good enough. This measurement has to be done before possibly reactivating the externalization, as measurements with activated externalization can lead to wrong measurement results (possibly due to calling \cmd{\shipout} inside of the measurement). The assumption is, that the real graphic size does not change if the externalization gets activated, which all tests seem to confirm.
+		 % If not converged, do a last measurement to be able to warn if the size does not fit good enough. During externalization, this warning would happen in a client process, so beware of this fact. This measurement is done before possibly reactivating the externalization, as externalizing a graphic multiple times is a can of worms. The graphic size can be different with activated externalization compared to no externalization (possibly due to calling \cmd{\shipout} inside of the measurement; see the relevant test case in test-tikzscale). This externalization error has is taken care of separately.
 %    \begin{macrocode}
-		\tikzscale@measureSize{\measuredFinal}{#1}{#2}%
-		\tikzscale@warnIfSizeDifference{\measuredFinal}{\requestedSize}{#3}%
-		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredFinal}%
+		\ifnumequal{\l}{\maxTestIterations}{%
+			\tikzscale@measureSize{\tikzscale@measuredLast}{#1}{#2}%
+			\tikzscale@warnIfSizeDifference{\tikzscale@measuredLast}{\requestedSize}{#3}%
+		}{}%
 	}{%
-		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredSecond}%
 % 		\tikzscale@debug{In scaleTikzpictureTo, no size difference remaining}%
 	}%
+	\tikzscale@renderAndCheckGraphic{#1}{#2}%
 }
 %    \end{macrocode}
 %\end{macro}
 %
-%\begin{macro}{\tikzscale@testGraphicFileForRetry}
+%\begin{macro}{\tikzscale@renderAndCheckGraphic}
 % The macro tests the size of the generated graphic file. If the size is not as the requested size, the optimization is redone with an adapted optimization criterion to compensate the error done in the last run.
 %
-% \xcmd\tikzscale@testGraphicFileForRetry{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}{file name}{last measurement}
+% \xcmd\tikzscale@renderAndCheckGraphic{\cmd{\wd} or \cmd{\ht}}{to-be-scaled content}
 %
 %    \begin{macrocode}
-\def\tikzscale@testGraphicFileForRetry#1#2#3#4{%
-% 	\tikzscale@debug{In testGraphicFileForRetry, 1=\detokenize{#1}, 2=OMITTED, 3=#3, 4=#4}%
+\def\tikzscale@renderAndCheckGraphic#1#2{%
+% 	\tikzscale@debug{In renderAndCheckGraphic, 1=\detokenize{#1}, 2=OMITTED}%
 %    \end{macrocode}
 	% Reactivate externalization to prepare the figure to be really rendered.
 %    \begin{macrocode}
 	\tikzscale@conditionalEnableExternalization
 %    \end{macrocode}
-	% Before externalizing the file, save the current externalization file name to be possibly used later. This code must be run after the reactivation of the externalization and before the rendering itself.
+	% Before externalizing the file, save the current externalization file name to be used later. This code must be run after the reactivation of the externalization and before the rendering itself.
 %    \begin{macrocode}
 	\tikzscale@ifExternalizationActive{%
 		\tikzexternalgetnextfilename{\tikzscale@externalizationName}%
-	}{}%
+% 		\tikzscale@debug{In renderAndCheckGraphic, externalizationName=\tikzscale@externalizationName}%
 %    \end{macrocode}
-	% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
+		% Finally, externalize and include the graphic with the final size. The graphic must not be included by reusing the measuredSize-box, as this leads to a subtly wrong behaviour when generating the PDF files. It can be observed by running the test suite with externalization and checking that no file is regenerated in the second run. Reusing the box can also lead to compile errors, if the problematic graphic is the last graphic in the document.
 %    \begin{macrocode}
-	#2%
+		#2%
 %    \end{macrocode}
-	% If the externalization is active, it might happen, that a figure was scaled correctly according to the request, but the externalized figure has a different size. The reason for that behaviour is unknown. The only chance we have is to calculate the error, rewind everything and try again with the compensated error.
+		% If the externalization is active, it might happen, that a figure was scaled correctly according to the request, but the externalized figure has a different size. The reason for that behaviour is unknown. The only chance we have is to calculate the error and compensage it next time (rewinding everything would be possible, too, but it didn't work).
 %    \begin{macrocode}
-	\tikzscale@ifExternalizationActive{%
 %    \end{macrocode}
 		% Read the size of the saved PDF file and save it on \cmd{\pgfexternalsize}.
 %    \begin{macrocode}
 		\pgfexternalreaddpth{\tikzscale@externalizationName}%
-		\tikzscale@ifIsWidth{#1}{%
-			\edef\pgfexternalsize{\pgfexternalwidth}%
-		}{%
-			\edef\pgfexternalsize{\pgfexternalheight}%
-		}%
+		\tikzscale@maybeGetExternalSize#1%
 %    \end{macrocode}
-		% Save the \cmd{\requestedSize} from the user in \cmd{\originalRequestedSize}, as the former value has to be overwritten for the next try. Do not use \cmd{\def}, as that would later be expanded to the current and not to the original value.
-%    \begin{macrocode}
-		\ifundef{\originalRequestedSize}{%
-			\let\originalRequestedSize\requestedSize
-		}{}%
-		%
-% 		\tikzscale@debug{In testGraphicFileForRetry, originalRequestedSize=\originalRequestedSize, requestedSize=\requestedSize, pgfexternalsize=\pgfexternalsize}%
-%    \end{macrocode}
-		% If a size difference is left, compensate it, decrease the counter and try the scaling again.
+		% If a size difference is left, print a warning
 %    \begin{macrocode}
 		\tikzscale@ifSizeDifference{\originalRequestedSize-\pgfexternalsize}{%
-			\pgfmathsetmacro{\requestedSize}{\requestedSize + #4 - \pgfexternalsize}%
-			\tikzscale@decreaseFigureCounter
-			\tikzscale@scaleTikzpictureTo{#1}{#2}{#3}%
+			\PackageWarning{tikzscale}{%
+				Graphic \tikzscale@externalizationName\MessageBreak
+				could not be scaled to correct size:\MessageBreak
+				requested size = \originalRequestedSize,\MessageBreak
+				size without externalization = \tikzscale@measuredLast,\MessageBreak
+				size with externalization = \pgfexternalsize\ExpandNext\@gobble\MessageBreak
+			}%
 		}{}%
-	}{}%
+	}{%
+		#2%
+	}%
+%    \end{macrocode}
+	% Do not leak global variables to avoid influencing other figures.
+%    \begin{macrocode}
+	\global\undef\tikzscale@scale
+	\global\undef\tikzscale@measuredLast
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1436,26 +1495,40 @@ and the derived files           tikzscale.ins,
 \def\tikzscale@decreaseFigureCounter{%
 % 	\tikzscale@debug{In decreaseFigureCounter}%
 %    \end{macrocode}
-% 		Use a group, so that the used counter register is not changed outside of this macro. This is necessary, as the global figure counter is not saved in a counter as one might think, but in a macro, so it must be copied to a local counter in order to be easily modified.
+% 	Use a group, so that the used counter register is not changed outside of this macro. This is necessary, as the global figure counter is not saved in a counter as one might think, but in a macro, so it must be copied to a local counter in order to be easily modified.
 %    \begin{macrocode}
 	\begingroup
+		\expandnext\addtocounter{\tikzscale@basename}{-1}%
+		\tikzset{external/remake next}%
+		\tikzset{external/export next}%
+		\expandnext\tikzsetnextfilename{\tikzscale@externalizationName}%
 %    \end{macrocode}
-		% Get the name of the macro holding the figure counter value.
+		% Get the name of the macro holding the figure counter value. It's not correct to use \cmd{/tikz/external/figure name}, because if \cmd{\tikzsetnextfilename} has been used for the previous figure, \cmd{/tikz/external/figure name} now holds the (default) name of the \emph{next} figure, which is different in general. This macro must decrease the counter of the previous figure name.
 %    \begin{macrocode}
-		\edef\macroName{c@tikzext@no@\pgfkeysvalueof{/tikz/external/figure name}}%
+% 		\tikzscale@debug{c@tikzext@no@test-tikzscale-figure \ifdef{\c@tikzext@no@test-tikzscale-figure}{exists}{does not exist}}%
+% 		\tikzscale@debug{c@tikzext@no@3Dplot-figure \ifdef{\c@tikzext@no@3Dplot-figure}{exists}{does not exist}}%
+% 		\edef\macroName{c@tikzext@no@\pgfkeysvalueof{/tikz/external/figure name}}% Results in c@tikzext@no@test-tikzscale-figure
+% 		\edef\macroName{c@tikzext@no@\tikzscale@basename-figure}% Results in c@tikzext@no@3Dplot-figure
+% 		\edef\macroName{c@tikzext@no@\tikzscale@basename-figure}
+% 		\tikzscale@debug{In decreaseFigureCounter, macroName=\macroName, externalizationName=\tikzscale@basename}%
 %    \end{macrocode}
 		% Use a TeX counter and store the figure counter value therein.
 %    \begin{macrocode}
-% 		\c@pgf@counta=\csname\macroName\endcsname\relax
-		\c@pgf@counta=\csuse{\macroName}\relax
+% 		\c@pgf@counta=\csuse\macroName\relax
+% 		\c@pgf@counta=\csname c@tikzext@no@\tikzscale@externalizationName\endcsname\relax
 %    \end{macrocode}
 		% Decrease the value of the local counter.
 %    \begin{macrocode}
-		\advance\c@pgf@counta -1\relax
+% 		\tikzscale@debug{In decreaseFigureCounter, before advance}%
+% 		\advance\c@pgf@counta -1\relax
+% 		\tikzscale@debug{In decreaseFigureCounter, after advance}%
 %    \end{macrocode}
 		% Save the value of the local counter back to the global counter macro.
 %    \begin{macrocode}
-		\expandafter\xdef\csname\macroName\endcsname{\the\c@pgf@counta}%
+% 		\expandafter\xdef\csname\macroName\endcsname{\the\c@pgf@counta}%
+% 		\expandnext\csxdef{\macroName}{\the\c@pgf@counta}%
+% 		\expandafter\xdef\csname c@tikzext@no@\tikzscale@externalizationName\endcsname{\the\c@pgf@counta}%
+
 	\endgroup
 }%
 %    \end{macrocode}
@@ -1601,9 +1674,10 @@ and the derived files           tikzscale.ins,
 %
 %\begin{macro}{\tikzscale@ifIsWidth}
 % \xcmd\tikzscale@ifIsWidth{condition}{true}{false}
+% This macro does not expand the argument. This macro is safe in an expansion-only context.
 %    \begin{macrocode}
 \def\tikzscale@ifIsWidth#1{%
-	\ifedefequal{#1}{\wd}%
+	\ifdefequal{#1}{\wd}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1617,6 +1691,10 @@ and the derived files           tikzscale.ins,
 \def\tikzscale@measureSize#1#2#3{%
 	\sbox{\tikzscale@measuredSize}{#3}%
 	\pgfmathsetmacro{#1}{#2\tikzscale@measuredSize}%
+}
+\def\tikzscale@globalMeasureSize#1#2#3{%
+	\sbox{\tikzscale@measuredSize}{#3}%
+	\pgfmathsetglobalmacro{#1}{#2\tikzscale@measuredSize}%
 }
 %    \end{macrocode}
 %\end{macro}
@@ -1676,15 +1754,6 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@conditionalEnableExternalization}
 % Activate externalization of TikZ graphics iff it had been active before definitely disabling it for measurement purposes.
 %    \begin{macrocode}
-%    \end{macrocode}
-	% For the externalization, set correct file name and only externalize the graphic with the final size. This produces a \href{http://old.nabble.com/minor-comment-about-TikZ-external-library-usage-tt31042245.html#a31042245}{known bug}
-%    \begin{macrocode}
-% 	\tikzsetnextfilename{#1}%
-%    \end{macrocode}
-	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case. This might be unnecessary due to the newly created path lookup logic.
-%    \begin{macrocode}
-% 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
-% 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
 \def\tikzscale@conditionalEnableExternalization{%
 % 	\tikzscale@debug{In conditionalEnableExternalization}%
 	%
@@ -1705,6 +1774,45 @@ and the derived files           tikzscale.ins,
 	\ifdef{\pause}{%
 		\LetLtxMacro{\pause}{\tikzscale@oldpause}%
 	}{}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@setExternalizationName}
+% Set the file name of the externalized figure. The argument contains the fully expanded file name.
+%    \begin{macrocode}
+\def\tikzscale@setExternalizationName#1{%
+% 	\tikzscale@debug{In setExternalizationName, 1=#1}%
+%    \end{macrocode}
+	% Get the number of dots in the file name and use the string left of the most right dot as the basename. This is done to support file names containing dots in their basename. The case of multiple file endings should be rare for TikZ pictures and they are not really supported anyway, as the automatic file extension search does not contain extension with more than one dot. If the file name does not contain a dot, \cmd{\includegraphics} fails, so neither support this case here.
+%    \begin{macrocode}
+	\StrCount{#1}{.}[\tikzscale@numberDots]%
+	\StrBefore[\tikzscale@numberDots]{#1}{.}[\tikzscale@basename]%
+	\expandnext\tikzscale@setExternalizationNameHelper{\tikzscale@basename}%
+}
+%    \end{macrocode}
+%\end{macro}
+%
+%\begin{macro}{\tikzscale@setExternalizationNameHelper}
+% Set the file name of the externalized figure. The argument contains the fully expanded basename of the file name.
+%    \begin{macrocode}
+\def\tikzscale@setExternalizationNameHelper#1{%
+%    \end{macrocode}
+	% A graphic can be included multiple times with different sizes (and different content, e.g. if a counter is involved in its text), so it has to be externalized multiple times. Thus, the file name is not a unique identifier in general.
+%    \begin{macrocode}
+	\ifltxcounter{#1}{%
+		\stepcounter{#1}%
+	}{%
+		\newcounter{#1}%
+	}%
+	\edef\tikzscale@finalFigureName{#1-figure\csuse{the#1}}
+	\expandnext\tikzsetnextfilename{\tikzscale@finalFigureName}%
+%    \end{macrocode}
+	% Get the current directory as a string and use it as an prefix, so that the graphic's PDF is generated in a subdirectory if the tikz file is located in a subdirectory, too. This is necessary, as the PDF file is searched for in the subdirectory in this case. This might be unnecessary due to the newly created path lookup logic, but will be relevant, if two pictures located in different directories have the same file name.
+%    \begin{macrocode}
+% 	\expandafter\tikzsetexternalprefix\expandafter{\tikzscale@pwd}%
+% 	\expandnext{\tikzsetexternalprefix}{\tikzscale@pwd}%
+% 	\tikzscale@debug{in setExternalizationNameHelper, finalFigureName=\tikzscale@finalFigureName}
 }
 %    \end{macrocode}
 %\end{macro}

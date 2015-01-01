@@ -5,6 +5,7 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{tikz-3dplot}
+\usetikzlibrary{backgrounds}
 \usepackage{currfile}
 \usepackage{lmodern}
 % Use the package subcaption to test the subfigure command
@@ -18,6 +19,8 @@
 \tikzexternalize
 % \tikzexternalize[mode=list and make]
 % \tikzexternaldisable % activate this line and test without "shell-escape" and without \tikzexternalenable below
+\providecommand\tikzexternalenable{}
+\providecommand\tikzexternaldisable{}
 \ifpdf
 \else
 	\tikzset{external/system call={latex \tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname "\image" "\texsource"; dvips -o "\image".ps "\image".dvi}}
@@ -92,8 +95,10 @@
 			\includegraphics[width=\linewidth,height=0.5\linewidth]{histogramNormal}%
 		\item {Use \texttt{\textbackslash graphicspath} with superfluous space\graphicspath{{somefolder} } (only defined locally for the current item)
 			\includegraphics{testRectangle.tikz}}%
-		\item Use a tikz-3Dplot, which is known to have a different size after externalization compared to the measurements without externalization and is thus rebuilt every time if the counter-measurements are not successful.\\%
+		\item Use a tikz-3Dplot, which is known to have a different size after externalization compared to the measurements without externalization and is thus rebuilt every time if the counter-measurements are not successful or externalized with the wrong size. Please check, that the size is too small after the first compilation and is correct after the second compilation\\%
 			\includegraphics[width=\linewidth]{3Dplot}
+		\item This has the correct size (found by outputting the width before the externalization) after the first compilation and is too wide after the second compilation.\\%
+			\includegraphics[width=2*209.49997-202.83287]{3Dplot}
 	\end{itemize}
 
 	\begin{figure}
