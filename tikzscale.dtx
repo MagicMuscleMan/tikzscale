@@ -927,7 +927,7 @@ and the derived files           tikzscale.ins,
 % \begin{macro}{\tikzscale@resolveFileName}
 % Find the exact file name of a graphic file given in the second argument by testing several paths and file endings. The argument must be expandable. The file name is saved in the macro given in the first argument. The resolved file name is saved expanded in the macro, i.e. it can be fully expanded after only one expansion of the macro.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@resolveFileName}{mm}{%
+\def\tikzscale@resolveFileName#1#2{%
 %    \end{macrocode}
 	% Delete the return variable if it already exists to allow checking if a file has been found.
 %    \begin{macrocode}
@@ -977,7 +977,7 @@ and the derived files           tikzscale.ins,
 % \begin{macro}{\tikzscale@setGraphicsPath}
 	% The \cmd{\graphicspath} command is used to set additional directories, which are searched for graphics. \cmd{\Ginput@path} is used to get the \href{http://tex.stackexchange.com/a/58404}{current content}.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@setGraphicsPath}{}{%
+\def\tikzscale@setGraphicsPath{%
 %    \end{macrocode}
 	% Remove possible leading or trailing spaces in the graphics path, as they lead to ugly string output before printing the graphic. Inserting such a space in the graphics path is a user's error, but it can happen easily as not all users are aware of TeX's newline issues. Fix the original path variable and not only tikzscale's variable, as this seems to be a general problem.
 %    \begin{macrocode}
@@ -1006,7 +1006,7 @@ and the derived files           tikzscale.ins,
 % The second argument is the true case.
 % The third argument ist the false case.
 %    \begin{macrocode}
-\NewDocumentCommand{\tikzscale@ifIsTikzFile}{m}{%
+\def\tikzscale@ifIsTikzFile#1{%
 	%    \end{macrocode}
 	% Create a helper function used inside the evaluation of \cmd{\edocsvlist} below.
 	%    \begin{macrocode}
@@ -1071,15 +1071,17 @@ and the derived files           tikzscale.ins,
 		% If externalization library has been loaded and is active, draw and scale the graphic if it is to be externalized.
 %    \begin{macrocode}
 		\tikzifexternalizingnext{%
-% 			\tikzscale@debug{Externalizing the file #2}%
+% 			\tikzscale@debug{In includetikz, externalizing the file #2}%
 			\tikzscale@includetikzUnexternalized{#2}%
 		}{%
+% 			\tikzscale@debug{In includetikz, check the already externalized file #2}%
 			\tikzscale@includetikzWithExternalization{#2}%
 		}%
 	}{%
 %    \end{macrocode}
 		% Always draw and scale the graphic if externalization library has not been loaded or is deactivated.
 %    \begin{macrocode}
+% 		\tikzscale@debug{In includetikz, include #2 without externalization}%
 		\tikzscale@includetikzUnexternalized{#2}%
 	}%
 }
@@ -1329,6 +1331,7 @@ and the derived files           tikzscale.ins,
 		% which can be solved by substitution and results in
 %    \begin{macrocode}
 		\pgfmathsetmacro{\fixedSize}{(\tikzscale@scale*\measuredFirst - \measuredSecond) / (\tikzscale@scale - 1)}%
+% 		\tikzscale@debug{In scaleTikzpictureTo, fixedSize=\fixedSize}%
 %    \end{macrocode}
 		% Now, to get the correct scaling factor, only take the variable areas into account, as it holds
 		% \cmd{\scaleFinal} = \cmd{\variableSizeFinal} / \cmd{\variableSizeOriginal}
@@ -1337,6 +1340,7 @@ and the derived files           tikzscale.ins,
 		% which results in
 %    \begin{macrocode}
 		\pgfmathsetmacro{\tikzscale@scale}{(\requestedSize - \fixedSize) / (\measuredFirst - \fixedSize)}%
+% 		\tikzscale@debug{In scaleTikzpictureTo, scale=\tikzscale@scale}%
 %    \end{macrocode}
 		% Additionally or alternatively the brute force approach to iteratively improve the solution can be used.
 %    \begin{macrocode}
@@ -1364,6 +1368,7 @@ and the derived files           tikzscale.ins,
 		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredFinal}%
 	}{%
 		\tikzscale@testGraphicFileForRetry{#1}{#2}{#3}{\measuredSecond}%
+% 		\tikzscale@debug{In scaleTikzpictureTo, no size difference remaining}%
 	}%
 }
 %    \end{macrocode}
@@ -1518,6 +1523,11 @@ and the derived files           tikzscale.ins,
 %\begin{macro}{\tikzscale@resizePlotWithAxesRatioTo}
 % \xcmd\tikzscale@resizePlotWithAxesRatioTo{\textbackslash wd or \textbackslash ht}{\textbackslash tikzscale@width or \textbackslash tikzscale@height}{to-be-scaled content}{file name}
 % The first argument determines if a specific width or a specific height should be achieved by resizing.
+% These are the parameters:
+% 1 = dimension
+% 2 = variable
+% 3 = content
+% 4 = fileName
 %    \begin{macrocode}
 \NewDocumentCommand{\tikzscale@resizePlotWithAxesRatioTo}{mmmm}{%
 % 	\tikzscale@debug{In resizePlotWithAxesRatioTo, 1=#1, 2=#2, 3=OMITTED, 4=#4}%
@@ -1548,7 +1558,7 @@ and the derived files           tikzscale.ins,
 		% Optimize if the absolute difference is too large.
 %    \begin{macrocode}
 		\tikzscale@ifSizeDifference{\sizeDifference}{%
-			\tikzscale@ifIsWidth{\dimension}{%
+			\tikzscale@ifIsWidth{#1}{%
 				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \sizeDifference}%
 				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
 			}{%
