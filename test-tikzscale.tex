@@ -15,6 +15,13 @@
 % Load the MWE package, although its functionality is not needed. The loading highlights, that some graphics used below are part of the MWE package.
 \usepackage{mwe}
 
+% This package is not needed and can be uncommented at any time. Loading it ensures that conflicts between this package and autonum (being involved by loading etoolbox and etextools) are detected.
+\usepackage[backend=bibtex]{biblatex}
+% Deactivate a warning from biblatex, as the package is intentionally not used in this document.
+\makeatletter
+\def\blx@ifsigned#1#2#3#4{}%
+\makeatother
+
 \usetikzlibrary{external}
 \tikzexternalize
 % \tikzexternalize[mode=list and make]

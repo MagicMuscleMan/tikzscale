@@ -97,7 +97,13 @@ and the derived files           tikzscale.ins,
 \ProvidesPackage{tikzscale}[2013/05/22 v0.2.6 tikzscale LaTeX package]
 \RequirePackage{graphicx}
 \RequirePackage{etoolbox}
+%
+% Avoid \href{https://groups.google.com/d/msg/comp.text.tex/VRrFB4ll5n0/Vu31OC4hQG8J}{a conflict} between etoolbox and etextools
+\makeatletter % The missing \makeatother command is on purpose (as every other combination results in an error).
+\let\autonum@etoolbox@forlistloop\forlistloop
 \RequirePackage{etextools}
+\let\forlistloop\autonum@etoolbox@forlistloop
+%
 \RequirePackage{pgfkeys}
 \RequirePackage{xparse}
 \RequirePackage{letltxmacro}
