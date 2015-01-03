@@ -52,7 +52,7 @@ See http://www.latex-project.org/lppl.txt
 \endpreamble
 \postamble
 
-Copyright (C) 2012 by Patrick Häcker <pat_h@web.de>
+Copyright (C) 2012, 2013, 2014, 2015 by Patrick Häcker <pat_h@web.de>
 
 This work may be distributed and/or modified under the
 conditions of the LaTeX Project Public License (LPPL), either
@@ -369,14 +369,16 @@ and the derived files           tikzscale.ins,
 % \subsection{Load Order}
 % There is no constraint regarding the load order known, yet. TikZ, PGFPlots and currfile might all be loaded or not in all possible combinations and orders before or after tikzscale.
 %
+% \subsection{Externalization library}
+% TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge.
+%
 % Using both the externalization library and tikzscale seems to have a race condition when a makefile is used with multiple jobs (-j$X$ with $X > 1$). The probability of getting errors increases with the number of jobs. For $X = 1$, obviously, no race condition could be observed. You should either avoid using mode \emph{list and make} or have only one job if you want to be on the safe side.
 %
 % Using \cmd{\tikzexternalenable} or \cmd{\tikzexternaldisable} inside of a tikzpicture leads to undefined behaviour when using tikzscale. It's not clear, what the correct behaviour should be and what the externalization library does withouth tikzscale.
 %
 % Note, that there was a \href{http://tex.stackexchange.com/a/88158/7323}{bug} in the externalization library, which has been fixed on 25th of December in 2012, so you might want to use a more recent version of TikZ or PGFPlots.
 %
-% \subsection{Externalization library}
-% TikZ' externalization library is supported. Its use is highly recommended, as tikzscale renders some graphics multiple times to get the correct size. The savings by using the externalization library can thus be huge. Please note, that when using the externalization library, sometimes two (externalization) runs are necessary to get completely correct sizes.
+% Please note, that when using the externalization library, sometimes two (externalization) runs are necessary to get completely correct sizes.
 %
 % \subsection{Fitting library}
 % Due to a \href{http://sourceforge.net/tracker/index.php?func=detail&aid=2991312&group_id=142562&atid=752792}{known bug in the fitting library}, nodes with a \texttt{fit} option also need a \texttt{transform shape} option in order to be scalable. If they are not scalable, they normally do not contain the nodes as specified when tikzscale is used.
