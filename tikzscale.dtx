@@ -283,7 +283,7 @@ and the derived files           tikzscale.ins,
 %
 % \vspace{0.5em}
 % \noindent\cmd{\begin\{tikzpicture\}}\\
-% \indent\texttt{\cmd{\draw} (0,0) -- node \{center\} (\cmd{\linewidth},1);}\\
+% \indent\texttt{\cmd{\draw} (0,0) -{}- node \{center\} (\cmd{\linewidth},1);}\\
 % \cmd{\end\{tikzpicture\}}
 % \vspace{0.5em}
 %
@@ -453,6 +453,10 @@ and the derived files           tikzscale.ins,
 %     \item Jose Hissa Ferreira
 %         \begin{itemize}
 %             \item Reported a bug when using a graphics path with multiple path entries, which lead to a fix.
+%         \end{itemize}
+%     \item Guillaume Martrou
+%         \begin{itemize}
+%             \item Reported a bug in an example of the documentation where -- was written instead of -{}-, which lead to its fix.
 %         \end{itemize}
 % \end{itemize}
 %
