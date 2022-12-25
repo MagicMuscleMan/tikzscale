@@ -1583,8 +1583,8 @@ and the derived files           tikzscale.ins,
 %    \end{macrocode}
 			% Correct the dimension by the error. Use a global assignment, as each iteration in the loop is put into a separate group.
 %    \begin{macrocode}
-			\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \widthDifference}%
-			\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \heightDifference}%
+			\pgfmathsetglobalmacro{\tikzscale@width}{\requestedWidth / \wd\tikzscale@measuredSize * \tikzscale@width}%
+			\pgfmathsetglobalmacro{\tikzscale@height}{\requestedHeight / \ht\tikzscale@measuredSize * \tikzscale@height}%
 		}{%
 			\breakforeach
 		}%
@@ -1644,10 +1644,10 @@ and the derived files           tikzscale.ins,
 %    \begin{macrocode}
 		\tikzscale@ifSizeDifference{\sizeDifference}{%
 			\tikzscale@ifIsWidth{#1}{%
-				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@width - \sizeDifference}%
+				\pgfmathsetglobalmacro{\tikzscale@width}{\requestedSize / \measuredSize * \tikzscale@width}%
 				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@width / \requestedAxisRatio}%
 			}{%
-				\pgfmathsetglobalmacro{\tikzscale@height}{\tikzscale@height - \sizeDifference}%
+				\pgfmathsetglobalmacro{\tikzscale@height}{\requestedSize / \measuredSize * \tikzscale@height}%
 				\pgfmathsetglobalmacro{\tikzscale@width}{\tikzscale@height * \requestedAxisRatio}%
 			}%
 			\tikzscale@ifSizeDifference{\sizeDifference-\tikzscale@oldSizeDifference}{%
