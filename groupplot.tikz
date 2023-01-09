@@ -1,0 +1,26 @@
+\begin{tikzpicture}
+	\begin{groupplot}[
+		group style={
+			group size=2 by 2,
+			y descriptions at=edge left,
+			x descriptions at=edge bottom
+		},
+		xlabel=$x$,
+		ylabel=$y$	
+		]
+		
+		\nextgroupplot
+		\addplot {x^2 - x + 4};
+		
+		\nextgroupplot
+		\addplot {x^2 - x + 4};
+		
+		\nextgroupplot
+		\addplot {x^2 - x + 4};
+		
+		\nextgroupplot
+		\addplot {x^2 - x + 4};
+		
+	\end{groupplot}
+	
+\end{tikzpicture}
